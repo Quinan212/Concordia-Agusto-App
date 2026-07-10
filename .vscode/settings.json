@@ -1,0 +1,13 @@
+{
+    "dart.flutterSdkPath": "C:/src/flutter",
+    "dart.sdkPath": "C:/src/flutter/bin/cache/dart-sdk",
+    "dart.enableSdkFormatter": true,
+    "editor.formatOnSave": true,
+    "editor.codeActionsOnSave": {
+        "source.fixAll": "explicit"
+    },
+    "files.watcherExclude": {
+        "**/.dart_tool": true,
+        "**/build": true
+    }
+}
