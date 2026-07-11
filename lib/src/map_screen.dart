@@ -5,29 +5,52 @@ import 'package:flutter_map_marker_cluster/flutter_map_marker_cluster.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import 'brand_asset.dart';
 import 'data.dart';
 import 'models.dart';
 
 class ConcordiaMapScreen extends StatefulWidget {
-  const ConcordiaMapScreen({super.key});
+  const ConcordiaMapScreen({
+    super.key,
+    this.initialCategory,
+    this.initialItemId,
+  });
+
+  final OpportunityCategory? initialCategory;
+  final String? initialItemId;
 
   @override
   State<ConcordiaMapScreen> createState() => _ConcordiaMapScreenState();
 }
 
-class _ConcordiaMapScreenState extends State<ConcordiaMapScreen> {
+class _ConcordiaMapScreenState extends State<ConcordiaMapScreen>
+    with SingleTickerProviderStateMixin {
   static const _initialCenter = LatLng(-31.3848811, -58.0129170);
   static const _initialZoom = 13.0;
   static const _minZoom = 11.5;
   static const _maxZoom = 18.0;
   static const _zoomStep = 0.65;
-  static const _labelZoom = 15.5;
+  static const _labelZoom = 16.5;
+  static const _markerFocusZoom = 15.2;
+
+  static final LatLngBounds _concordiaBounds = LatLngBounds(
+    const LatLng(-31.55, -58.24),
+    const LatLng(-31.18, -57.80),
+  );
 
   final MapController _mapController = MapController();
-  final ValueNotifier<MapCamera?> _cameraNotifier = ValueNotifier(null);
+  final NetworkTileProvider _tileProvider = NetworkTileProvider();
+
+  late final AnimationController _cameraAnimationController;
+  Animation<LatLng>? _centerAnimation;
+  Animation<double>? _zoomAnimation;
 
   OpportunityItem? _selectedItem;
   OpportunityCategory? _selectedCategory;
+  LatLng _currentCenter = _initialCenter;
+  double _currentZoom = _initialZoom;
+  bool _showAllMarkerLabels = false;
+  bool _mapReady = false;
 
   List<OpportunityItem> get _mapItems => opportunities
       .where((item) => item.hasMapLocation)
@@ -47,28 +70,77 @@ class _ConcordiaMapScreenState extends State<ConcordiaMapScreen> {
   }
 
   @override
+  void initState() {
+    super.initState();
+    _selectedCategory = widget.initialCategory;
+    final initialItemId = widget.initialItemId;
+    if (initialItemId != null) {
+      for (final item in opportunities) {
+        if (item.id == initialItemId && item.hasMapLocation) {
+          _selectedItem = item;
+          break;
+        }
+      }
+    }
+    _cameraAnimationController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 260),
+    )..addListener(_applyCameraAnimation);
+  }
+
+  @override
   void dispose() {
-    _cameraNotifier.dispose();
+    _cameraAnimationController.dispose();
+    _mapController.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
+    final safeTop = MediaQuery.paddingOf(context).top;
     final bottomInset = MediaQuery.paddingOf(context).bottom;
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF5F7F4),
+      backgroundColor: const Color(0xFFE8EEE9),
       body: Stack(
         children: [
           FlutterMap(
             mapController: _mapController,
             options: MapOptions(
-              initialCenter: _initialCenter,
-              initialZoom: _initialZoom,
+              initialCenter: _selectedItem == null
+                  ? _initialCenter
+                  : LatLng(
+                      _selectedItem!.latitude!,
+                      _selectedItem!.longitude!,
+                    ),
+              initialZoom: _selectedItem == null
+                  ? _initialZoom
+                  : _markerFocusZoom,
               minZoom: _minZoom,
               maxZoom: _maxZoom,
+              cameraConstraint: CameraConstraint.containCenter(
+                bounds: _concordiaBounds,
+              ),
+              backgroundColor: const Color(0xFFE8EEE9),
+              onMapReady: () {
+                _mapReady = true;
+                final camera = _mapController.camera;
+                _currentCenter = camera.center;
+                _currentZoom = camera.zoom;
+                if (_selectedItem == null && _selectedCategory != null) {
+                  WidgetsBinding.instance.addPostFrameCallback((_) {
+                    if (mounted) _fitVisibleItems();
+                  });
+                }
+              },
               onPositionChanged: (camera, _) {
-                _cameraNotifier.value = camera;
+                _currentCenter = camera.center;
+                _currentZoom = camera.zoom;
+
+                final shouldShowLabels = camera.zoom >= _labelZoom;
+                if (shouldShowLabels != _showAllMarkerLabels && mounted) {
+                  setState(() => _showAllMarkerLabels = shouldShowLabels);
+                }
               },
               onTap: (_, _) {
                 if (_selectedItem != null) {
@@ -79,109 +151,110 @@ class _ConcordiaMapScreenState extends State<ConcordiaMapScreen> {
             children: [
               TileLayer(
                 urlTemplate:
-                    'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',
-                subdomains: const ['a', 'b', 'c', 'd'],
+                    'https://basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',
                 userAgentPackageName: 'ar.maillet.encuentroer',
+                tileProvider: _tileProvider,
+                retinaMode: RetinaMode.isHighDensity(context),
+                maxNativeZoom: 18,
+                keepBuffer: 2,
+                panBuffer: 1,
                 tileDisplay: const TileDisplay.instantaneous(),
               ),
-              ValueListenableBuilder<MapCamera?>(
-                valueListenable: _cameraNotifier,
-                builder: (context, camera, _) {
-                  final zoom = camera?.zoom ?? _initialZoom;
-                  return MarkerClusterLayerWidget(
-                    options: MarkerClusterLayerOptions(
-                      markers: _buildMarkers(showLabels: zoom >= _labelZoom),
-                      builder: _buildCluster,
-                      maxClusterRadius: 60,
-                      size: const Size(42, 42),
-                      padding: const EdgeInsets.all(48),
-                      maxZoom: _maxZoom,
-                      disableClusteringAtZoom: 16,
-                      zoomToBoundsOnClick: true,
-                      centerMarkerOnClick: false,
-                      spiderfyCluster: false,
-                      showPolygon: false,
-                      animationsOptions: const AnimationsOptions(
-                        zoom: Duration(milliseconds: 180),
-                        fitBound: Duration(milliseconds: 180),
-                        centerMarker: Duration(milliseconds: 120),
-                        spiderfy: Duration(milliseconds: 0),
-                      ),
-                      onMarkerTap: _handleMarkerTap,
-                    ),
-                  );
-                },
+              MarkerClusterLayerWidget(
+                options: MarkerClusterLayerOptions(
+                  markers: _buildMarkers(),
+                  builder: _buildCluster,
+                  maxClusterRadius: 60,
+                  size: const Size(42, 42),
+                  padding: const EdgeInsets.all(48),
+                  maxZoom: _maxZoom,
+                  disableClusteringAtZoom: 16,
+                  zoomToBoundsOnClick: true,
+                  centerMarkerOnClick: false,
+                  spiderfyCluster: false,
+                  showPolygon: false,
+                  animationsOptions: const AnimationsOptions(
+                    zoom: Duration(milliseconds: 180),
+                    fitBound: Duration(milliseconds: 180),
+                    centerMarker: Duration(milliseconds: 120),
+                    spiderfy: Duration(milliseconds: 0),
+                  ),
+                  onMarkerTap: _handleMarkerTap,
+                ),
               ),
             ],
           ),
           Positioned(
-            top: MediaQuery.paddingOf(context).top + 12,
+            top: safeTop + 12,
             left: 16,
             child: _MapControl(
               icon: Icons.arrow_back_rounded,
-              tooltip: 'Volver a paseos',
+              tooltip: 'Volver',
               onPressed: () => Navigator.of(context).maybePop(),
             ),
           ),
           Positioned(
-            top: MediaQuery.paddingOf(context).top + 190,
+            top: safeTop + 12,
+            right: 16,
+            child: const _MapAttribution(),
+          ),
+          Positioned(
+            top: safeTop + 58,
             right: 16,
             child: _zoomControls(),
           ),
           Positioned(
-            left: 4,
-            right: 4,
-            bottom: bottomInset + 104,
-            child: _categoryFilters(),
-          ),
-          Positioned(
-            bottom: bottomInset + 126,
-            right: 22,
-            child: const Opacity(
-              opacity: 0,
-              child: Text(
-                '© OSM · CARTO',
-                style: TextStyle(color: Color(0xFF5F7269), fontSize: 7),
-              ),
+            left: 12,
+            right: 12,
+            bottom: bottomInset + 12,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                _categoryFilters(),
+                const SizedBox(height: 10),
+                AnimatedSwitcher(
+                  duration: const Duration(milliseconds: 180),
+                  switchInCurve: Curves.easeOut,
+                  switchOutCurve: Curves.easeIn,
+                  child: _selectedItem == null
+                      ? KeyedSubtree(
+                          key: ValueKey(
+                            'summary-${_selectedCategory?.name ?? 'all'}',
+                          ),
+                          child: _mapSummary(),
+                        )
+                      : KeyedSubtree(
+                          key: ValueKey('selected-${_selectedItem!.id}'),
+                          child: _selectedCard(_selectedItem!),
+                        ),
+                ),
+              ],
             ),
           ),
-          if (_selectedItem == null)
-            Positioned(
-              left: 16,
-              right: 16,
-              bottom: bottomInset + 16,
-              child: _mapSummary(),
-            )
-          else
-            Positioned(
-              left: 16,
-              right: 16,
-              bottom: bottomInset + 16,
-              child: _selectedCard(_selectedItem!),
-            ),
         ],
       ),
     );
   }
 
-  List<Marker> _buildMarkers({required bool showLabels}) {
-    return _visibleMapItems
-        .map(
-          (item) => Marker(
-            key: ValueKey(item.id),
-            point: LatLng(item.latitude!, item.longitude!),
-            width: showLabels ? 190 : 44,
-            height: 48,
-            child: _MapMarker(
-              item: item,
-              showLabel: showLabels,
-              isSelected: item.id == _selectedItem?.id,
-              color: _categoryColor(item.category),
-              icon: _categoryIcon(item.category),
-            ),
-          ),
-        )
-        .toList(growable: false);
+  List<Marker> _buildMarkers() {
+    return _visibleMapItems.map((item) {
+      final isSelected = item.id == _selectedItem?.id;
+      final showLabel = isSelected || _showAllMarkerLabels;
+
+      return Marker(
+        key: ValueKey<String>(item.id),
+        point: LatLng(item.latitude!, item.longitude!),
+        width: showLabel ? 190 : 46,
+        height: 50,
+        child: _MapMarker(
+          item: item,
+          showLabel: showLabel,
+          isSelected: isSelected,
+          color: _categoryColor(item.category),
+          icon: _categoryIcon(item.category),
+        ),
+      );
+    }).toList(growable: false);
   }
 
   Widget _buildCluster(BuildContext context, List<Marker> markers) {
@@ -213,11 +286,27 @@ class _ConcordiaMapScreenState extends State<ConcordiaMapScreen> {
     final key = marker.key;
     if (key is! ValueKey<String>) return;
 
-    final item = _mapItems.where((candidate) => candidate.id == key.value);
-    if (item.isEmpty) return;
+    OpportunityItem? tappedItem;
+    for (final item in _mapItems) {
+      if (item.id == key.value) {
+        tappedItem = item;
+        break;
+      }
+    }
+    if (tappedItem == null) return;
 
-    Navigator.of(context).push(
-      MaterialPageRoute(builder: (_) => _ItemDetailPage(item: item.first)),
+    if (_selectedItem?.id == tappedItem.id) {
+      _openDetails(tappedItem);
+      return;
+    }
+
+    setState(() => _selectedItem = tappedItem);
+    final targetZoom = _currentZoom < _markerFocusZoom
+        ? _markerFocusZoom
+        : _currentZoom;
+    _animateCameraTo(
+      LatLng(tappedItem.latitude!, tappedItem.longitude!),
+      targetZoom,
     );
   }
 
@@ -247,49 +336,103 @@ class _ConcordiaMapScreenState extends State<ConcordiaMapScreen> {
             tooltip: 'Alejar',
             onPressed: () => _zoomBy(-_zoomStep),
           ),
+          const Divider(height: 1, indent: 8, endIndent: 8),
+          _MapControl(
+            icon: Icons.center_focus_strong_rounded,
+            tooltip: 'Centrar en Concordia',
+            onPressed: _recenterMap,
+          ),
         ],
       ),
     );
   }
 
   Widget _categoryFilters() {
-    return Row(
-      children: [
-        Expanded(
-          child: _categoryChip(
-            label: 'Todos',
-            icon: Icons.layers_rounded,
-            overlap: 0,
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        if (constraints.maxWidth >= 430) {
+          return SizedBox(
+            width: double.infinity,
+            child: SegmentedButton<OpportunityCategory?>(
+              showSelectedIcon: false,
+              segments: const [
+                ButtonSegment<OpportunityCategory?>(
+                  value: null,
+                  icon: Icon(Icons.layers_rounded),
+                  label: Text('Todos'),
+                ),
+                ButtonSegment<OpportunityCategory?>(
+                  value: OpportunityCategory.lodging,
+                  icon: Icon(Icons.hotel_rounded),
+                  label: Text('Dormir'),
+                ),
+                ButtonSegment<OpportunityCategory?>(
+                  value: OpportunityCategory.viandas,
+                  icon: Icon(Icons.restaurant_rounded),
+                  label: Text('Comida'),
+                ),
+                ButtonSegment<OpportunityCategory?>(
+                  value: OpportunityCategory.places,
+                  icon: Icon(Icons.place_rounded),
+                  label: Text('Paseos'),
+                ),
+              ],
+              selected: <OpportunityCategory?>{_selectedCategory},
+              style: SegmentedButton.styleFrom(
+                foregroundColor: const Color(0xFF174D3C),
+                backgroundColor: Colors.white,
+                selectedForegroundColor: Colors.white,
+                selectedBackgroundColor: const Color(0xFF174D3C),
+                side: const BorderSide(color: Color(0xFFC9D8D0)),
+                textStyle: const TextStyle(fontWeight: FontWeight.w700),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 8,
+                  vertical: 12,
+                ),
+                visualDensity: VisualDensity.compact,
+              ),
+              onSelectionChanged: (selection) {
+                if (selection.isEmpty) return;
+                _selectCategory(selection.first);
+              },
+            ),
+          );
+        }
+
+        return Material(
+          color: Colors.transparent,
+          child: SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            physics: const BouncingScrollPhysics(),
+            child: Row(
+              children: [
+                _categoryChip(
+                  label: 'Todos',
+                  icon: Icons.layers_rounded,
+                ),
+                const SizedBox(width: 8),
+                _categoryChip(
+                  label: 'Dormir',
+                  icon: Icons.hotel_rounded,
+                  category: OpportunityCategory.lodging,
+                ),
+                const SizedBox(width: 8),
+                _categoryChip(
+                  label: 'Comida',
+                  icon: Icons.restaurant_rounded,
+                  category: OpportunityCategory.viandas,
+                ),
+                const SizedBox(width: 8),
+                _categoryChip(
+                  label: 'Paseos',
+                  icon: Icons.place_rounded,
+                  category: OpportunityCategory.places,
+                ),
+              ],
+            ),
           ),
-        ),
-        const SizedBox(width: 0),
-        Expanded(
-          child: _categoryChip(
-            label: 'Hoteles',
-            icon: Icons.hotel_rounded,
-            category: OpportunityCategory.lodging,
-            overlap: 3,
-          ),
-        ),
-        const SizedBox(width: 0),
-        Expanded(
-          child: _categoryChip(
-            label: 'Comida',
-            icon: Icons.restaurant_rounded,
-            category: OpportunityCategory.viandas,
-            overlap: 6,
-          ),
-        ),
-        const SizedBox(width: 0),
-        Expanded(
-          child: _categoryChip(
-            label: 'Paseos',
-            icon: Icons.place_rounded,
-            category: OpportunityCategory.places,
-            overlap: 9,
-          ),
-        ),
-      ],
+        );
+      },
     );
   }
 
@@ -297,50 +440,45 @@ class _ConcordiaMapScreenState extends State<ConcordiaMapScreen> {
     required String label,
     required IconData icon,
     OpportunityCategory? category,
-    double overlap = 0,
   }) {
     final selected = _selectedCategory == category;
-    return SizedBox(
-      width: double.infinity,
-      child: Transform.translate(
-        offset: Offset(-overlap, 0),
-        child: Transform.scale(
-          // Cada filtro gana otros 5 px sin convertir la fila en scrollable.
-          scaleX: 1.10,
-          child: ChoiceChip(
-            label: Text(label, overflow: TextOverflow.ellipsis),
-            avatar: Icon(
-              icon,
-              size: 18,
-              color: selected ? Colors.white : _categoryColor(category),
-            ),
-            selected: selected,
-            showCheckmark: false,
-            visualDensity: VisualDensity.compact,
-            materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-            padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 11),
-            labelPadding: const EdgeInsets.only(left: 2, right: 2),
-            labelStyle: TextStyle(
-              color: selected ? Colors.white : const Color(0xFF174D3C),
-              fontWeight: FontWeight.w700,
-              fontSize: 12,
-            ),
-            selectedColor: const Color(0xFF174D3C),
-            backgroundColor: Colors.white,
-            side: const BorderSide(color: Color(0xFFC9D8D0)),
-            onSelected: (_) {
-              setState(() {
-                _selectedCategory = category;
-                if (_selectedItem != null &&
-                    !_matchesSelectedCategory(_selectedItem!)) {
-                  _selectedItem = null;
-                }
-              });
-            },
-          ),
-        ),
+    return ChoiceChip(
+      label: Text(label),
+      avatar: Icon(
+        icon,
+        size: 18,
+        color: selected ? Colors.white : _categoryColor(category),
       ),
+      selected: selected,
+      showCheckmark: false,
+      visualDensity: VisualDensity.compact,
+      materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 11),
+      labelStyle: TextStyle(
+        color: selected ? Colors.white : const Color(0xFF174D3C),
+        fontWeight: FontWeight.w700,
+      ),
+      selectedColor: const Color(0xFF174D3C),
+      backgroundColor: Colors.white,
+      side: const BorderSide(color: Color(0xFFC9D8D0)),
+      onSelected: (_) => _selectCategory(category),
     );
+  }
+
+  void _selectCategory(OpportunityCategory? category) {
+    if (_selectedCategory == category && _selectedItem == null) return;
+
+    setState(() {
+      _selectedCategory = category;
+      if (_selectedItem != null &&
+          !_matchesSelectedCategory(_selectedItem!)) {
+        _selectedItem = null;
+      }
+    });
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) _fitVisibleItems();
+    });
   }
 
   Color _categoryColor(OpportunityCategory? category) {
@@ -363,12 +501,82 @@ class _ConcordiaMapScreenState extends State<ConcordiaMapScreen> {
   }
 
   void _zoomBy(double delta) {
-    final camera = _cameraNotifier.value;
-    final center = camera?.center ?? _initialCenter;
-    final zoom = camera?.zoom ?? _initialZoom;
-    final nextZoom = (zoom + delta).clamp(_minZoom, _maxZoom).toDouble();
-    if ((nextZoom - zoom).abs() < 0.01) return;
-    _mapController.move(center, nextZoom);
+    final nextZoom = (_currentZoom + delta)
+        .clamp(_minZoom, _maxZoom)
+        .toDouble();
+    if ((nextZoom - _currentZoom).abs() < 0.01) return;
+    _animateCameraTo(_currentCenter, nextZoom);
+  }
+
+  void _recenterMap() {
+    _animateCameraTo(_initialCenter, _initialZoom);
+  }
+
+  void _fitVisibleItems() {
+    if (!_mapReady) return;
+
+    final coordinates = _visibleMapItems
+        .map((item) => LatLng(item.latitude!, item.longitude!))
+        .toList(growable: false);
+    if (coordinates.isEmpty) return;
+
+    _cameraAnimationController.stop();
+    if (coordinates.length == 1) {
+      _animateCameraTo(coordinates.first, _markerFocusZoom);
+      return;
+    }
+
+    final fittedCamera = CameraFit.coordinates(
+      coordinates: coordinates,
+      padding: const EdgeInsets.fromLTRB(54, 120, 54, 235),
+      maxZoom: 15.4,
+    ).fit(_mapController.camera);
+    _animateCameraTo(fittedCamera.center, fittedCamera.zoom);
+  }
+
+  void _animateCameraTo(LatLng targetCenter, double targetZoom) {
+    if (!_mapReady) return;
+
+    final curve = CurvedAnimation(
+      parent: _cameraAnimationController,
+      curve: Curves.easeOutCubic,
+    );
+    _centerAnimation = LatLngTween(
+      begin: _currentCenter,
+      end: targetCenter,
+    ).animate(curve);
+    _zoomAnimation = Tween<double>(
+      begin: _currentZoom,
+      end: targetZoom.clamp(_minZoom, _maxZoom).toDouble(),
+    ).animate(curve);
+
+    _cameraAnimationController
+      ..stop()
+      ..reset()
+      ..forward();
+  }
+
+  void _applyCameraAnimation() {
+    if (!_mapReady) return;
+    final center = _centerAnimation?.value;
+    final zoom = _zoomAnimation?.value;
+    if (center == null || zoom == null) return;
+    _mapController.move(center, zoom);
+  }
+
+  String get _mapSummaryTitle => switch (_selectedCategory) {
+    OpportunityCategory.lodging => 'Dónde dormir',
+    OpportunityCategory.viandas => 'Dónde comer',
+    OpportunityCategory.places => 'Paseos y atractivos',
+    null => 'Lugares en el mapa',
+    OpportunityCategory.gastronomy => 'Dónde comer',
+  };
+
+  String get _mapSummaryCount {
+    final count = _visibleMapItems.length;
+    return count == 1
+        ? '1 ubicación visible en Concordia'
+        : '$count ubicaciones visibles en Concordia';
   }
 
   Widget _mapSummary() {
@@ -384,15 +592,17 @@ class _ConcordiaMapScreenState extends State<ConcordiaMapScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
-                    'Lugares para conocer',
-                    style: TextStyle(
+                  Text(
+                    _mapSummaryTitle,
+                    style: const TextStyle(
                       color: Color(0xFF174D3C),
                       fontWeight: FontWeight.w800,
                     ),
                   ),
                   Text(
-                    '${_visibleMapItems.length} ubicaciones visibles en Concordia',
+                    '$_mapSummaryCount · Tocá un marcador para ver acciones',
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
                     style: const TextStyle(
                       color: Color(0xFF5F7269),
                       fontSize: 12,
@@ -412,62 +622,96 @@ class _ConcordiaMapScreenState extends State<ConcordiaMapScreen> {
     return Card(
       margin: EdgeInsets.zero,
       child: Padding(
-        padding: const EdgeInsets.fromLTRB(16, 14, 10, 12),
-        child: Row(
+        padding: const EdgeInsets.fromLTRB(14, 13, 14, 12),
+        child: Column(
           children: [
-            Container(
-              width: 52,
-              height: 52,
-              decoration: BoxDecoration(
-                color: _categoryColor(item.category).withValues(alpha: 0.14),
-                borderRadius: BorderRadius.circular(14),
-              ),
-              child: Icon(
-                _categoryIcon(item.category),
-                color: _categoryColor(item.category),
-              ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    item.title,
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
-                      color: Color(0xFF174D3C),
-                      fontWeight: FontWeight.w800,
+            Row(
+              children: [
+                if (item.brandAsset != null)
+                  BrandAssetBox(
+                    assetPath: item.brandAsset!,
+                    fallbackIcon: _categoryIcon(item.category),
+                    size: 48,
+                  )
+                else
+                  Container(
+                    width: 48,
+                    height: 48,
+                    decoration: BoxDecoration(
+                      color: _categoryColor(
+                        item.category,
+                      ).withValues(alpha: 0.14),
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                    child: Icon(
+                      _categoryIcon(item.category),
+                      color: _categoryColor(item.category),
                     ),
                   ),
-                  const SizedBox(height: 4),
-                  Text(
-                    item.mapAddress ?? item.subtitle,
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
-                      color: Color(0xFF5F7269),
-                      fontSize: 12,
-                    ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        item.title,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          color: Color(0xFF174D3C),
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                      const SizedBox(height: 3),
+                      Text(
+                        item.mapAddress ?? item.subtitle,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          color: Color(0xFF5F7269),
+                          fontSize: 12,
+                        ),
+                      ),
+                    ],
                   ),
-                ],
-              ),
+                ),
+                IconButton(
+                  tooltip: 'Cerrar selección',
+                  onPressed: () => setState(() => _selectedItem = null),
+                  icon: const Icon(Icons.close_rounded),
+                ),
+              ],
             ),
-            IconButton(
-              tooltip: 'Abrir ubicación',
-              onPressed: () => _openLocation(item),
-              icon: const Icon(Icons.directions_rounded),
-            ),
-            IconButton(
-              tooltip: 'Cerrar selección',
-              onPressed: () => setState(() => _selectedItem = null),
-              icon: const Icon(Icons.close_rounded),
+            const SizedBox(height: 10),
+            Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton.icon(
+                    onPressed: () => _openLocation(item),
+                    icon: const Icon(Icons.directions_rounded),
+                    label: const Text('Cómo llegar'),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: FilledButton.tonalIcon(
+                    onPressed: () => _openDetails(item),
+                    icon: const Icon(Icons.info_outline_rounded),
+                    label: const Text('Ver detalles'),
+                  ),
+                ),
+              ],
             ),
           ],
         ),
       ),
     );
+  }
+
+  void _openDetails(OpportunityItem item) {
+    Navigator.of(
+      context,
+    ).push(MaterialPageRoute(builder: (_) => _ItemDetailPage(item: item)));
   }
 
   Future<void> _openLocation(OpportunityItem item) async {
@@ -492,6 +736,32 @@ class _ConcordiaMapScreenState extends State<ConcordiaMapScreen> {
     ScaffoldMessenger.of(
       context,
     ).showSnackBar(SnackBar(content: Text(message)));
+  }
+}
+
+class _MapAttribution extends StatelessWidget {
+  const _MapAttribution();
+
+  @override
+  Widget build(BuildContext context) {
+    return IgnorePointer(
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 4),
+        decoration: BoxDecoration(
+          color: Colors.white.withValues(alpha: 0.88),
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(color: const Color(0x99C9D8D0)),
+        ),
+        child: const Text(
+          '© OpenStreetMap contributors · © CARTO',
+          style: TextStyle(
+            color: Color(0xFF4E6259),
+            fontSize: 8.5,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+      ),
+    );
   }
 }
 
@@ -548,6 +818,14 @@ class _ItemDetailPage extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  if (item.brandAsset != null) ...[
+                    BrandAssetBox(
+                      assetPath: item.brandAsset!,
+                      fallbackIcon: Icons.account_balance_rounded,
+                      size: 72,
+                    ),
+                    const SizedBox(height: 12),
+                  ],
                   Text(
                     item.title,
                     maxLines: 2,
@@ -642,7 +920,7 @@ class _ItemDetailPage extends StatelessWidget {
 
   Widget _tagChip(OpportunityTag tag) {
     final data = switch (tag) {
-      OpportunityTag.group => ('Para varias personas', const Color(0xFFDDEFE4)),
+      OpportunityTag.group => ('Para grupos', const Color(0xFFDDEFE4)),
       OpportunityTag.budget => ('Económico', const Color(0xFFF5ECD3)),
       OpportunityTag.direct => ('Contacto directo', const Color(0xFFE6EEF7)),
       OpportunityTag.classic => ('Clásico', const Color(0xFFF3E2E2)),
@@ -650,6 +928,8 @@ class _ItemDetailPage extends StatelessWidget {
       OpportunityTag.practical => ('Práctico', const Color(0xFFE9F4E6)),
       OpportunityTag.paseo => ('Para visitar', const Color(0xFFE7EFFA)),
       OpportunityTag.highlighted => ('Recomendado', const Color(0xFFE4F5EB)),
+      OpportunityTag.culture => ('Cultural', const Color(0xFFF1E7F7)),
+      OpportunityTag.outdoors => ('Al aire libre', const Color(0xFFE3F2E9)),
     };
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
@@ -719,7 +999,11 @@ class _DetailActionButton extends StatelessWidget {
   void _showLaunchError(BuildContext context, String rawUrl) {
     if (!context.mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('No pudimos abrir este enlace: $rawUrl')),
+      const SnackBar(
+        content: Text(
+          'No pudimos abrir el enlace. Verificá que tengas una aplicación compatible.',
+        ),
+      ),
     );
   }
 }

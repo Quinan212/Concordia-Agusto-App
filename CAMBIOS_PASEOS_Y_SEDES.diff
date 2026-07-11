@@ -1,0 +1,833 @@
+diff -ru /mnt/data/paseos_work_backup/lib/src/app.dart /mnt/data/paseos_work/lib/src/app.dart
+--- /mnt/data/paseos_work_backup/lib/src/app.dart	2026-07-10 10:09:07.000000000 +0000
++++ /mnt/data/paseos_work/lib/src/app.dart	2026-07-10 10:28:17.558591449 +0000
+@@ -113,8 +113,10 @@
+         onCopyMessage: _copyMessage,
+       ),
+       3 => _OpportunityListTab(
+-        title: 'Paseos y sitios de interés',
+-        subtitle: 'Ideas para aprovechar tu tiempo libre en Concordia.',
++        title: 'Paseos y atractivos',
++        subtitle: 'Lugares turísticos, culturales y recreativos para conocer Concordia.',
++        notice:
++            'Confirmá horarios, tarifas, accesibilidad y condiciones de ingreso antes de trasladarte.',
+         items: _filterItems(OpportunityCategory.places),
+         favorites: _favorites,
+         onFavoriteToggle: _toggleFavorite,
+@@ -555,7 +557,7 @@
+               const SizedBox(height: 10),
+               const Text(
+                 'Guía práctica para quienes asisten al III Encuentro sobre '
+-                'Historia de Entre Ríos: alojamiento, comidas, sedes y propuestas para el tiempo libre.',
++                'Historia de Entre Ríos: sedes, alojamiento, comidas y lugares para conocer Concordia.',
+                 style: TextStyle(fontSize: 15, color: Color(0xFF203129)),
+               ),
+               const SizedBox(height: 16),
+@@ -579,6 +581,8 @@
+           ),
+         ),
+         const SizedBox(height: 18),
++        const _EncounterInformationCard(),
++        const SizedBox(height: 18),
+         _HighlightsGrid(),
+         const SizedBox(height: 18),
+         Card(
+@@ -635,6 +639,8 @@
+           ),
+         ),
+         const SizedBox(height: 18),
++        const _UsefulInformationCard(),
++        const SizedBox(height: 18),
+         _QuickAccessGrid(
+           favoritesCount: favoritesCount,
+           onOpenCategory: onOpenCategory,
+@@ -644,6 +650,172 @@
+   }
+ }
+ 
++
++class _EncounterInformationCard extends StatelessWidget {
++  const _EncounterInformationCard();
++
++  @override
++  Widget build(BuildContext context) {
++    return Card(
++      color: const Color(0xFFEFF6EE),
++      child: Padding(
++        padding: const EdgeInsets.all(16),
++        child: Column(
++          crossAxisAlignment: CrossAxisAlignment.start,
++          children: [
++            const Row(
++              children: [
++                Icon(Icons.event_rounded, color: Color(0xFF174D3C)),
++                SizedBox(width: 10),
++                Expanded(
++                  child: Text(
++                    'Sedes del Encuentro',
++                    style: TextStyle(
++                      fontSize: 20,
++                      fontWeight: FontWeight.w800,
++                      color: Color(0xFF174D3C),
++                    ),
++                  ),
++                ),
++              ],
++            ),
++            const SizedBox(height: 6),
++            const Text(
++              'Las actividades se realizan en dos edificios distintos.',
++              style: TextStyle(color: Color(0xFF5F7269), fontSize: 13),
++            ),
++            const SizedBox(height: 14),
++            _venue(
++              icon: Icons.movie_outlined,
++              title: 'Jueves 13 · 18:30',
++              place: 'Profesorado Superior de Ciencias Sociales',
++              address: 'Hipólito Yrigoyen 1352 · Apertura y cine debate',
++              mapsUrl:
++                  'https://www.google.com/maps/search/?api=1&query=Hip%C3%B3lito+Yrigoyen+1352+Concordia',
++            ),
++            const Divider(height: 24),
++            _venue(
++              icon: Icons.groups_2_outlined,
++              title: 'Viernes 14 · desde las 8:00',
++              place: 'Facultad de Ciencias de la Administración · UNER',
++              address: 'Av. Monseñor Tavella 1424 · Mesas y exposiciones',
++              mapsUrl:
++                  'https://www.google.com/maps/search/?api=1&query=Av.+Monse%C3%B1or+Tavella+1424+Concordia',
++            ),
++            const SizedBox(height: 14),
++            Wrap(
++              spacing: 8,
++              runSpacing: 8,
++              children: encounterActions
++                  .map((action) => _ActionButton(action: action))
++                  .toList(growable: false),
++            ),
++          ],
++        ),
++      ),
++    );
++  }
++
++  static Widget _venue({
++    required IconData icon,
++    required String title,
++    required String place,
++    required String address,
++    required String mapsUrl,
++  }) {
++    return Row(
++      crossAxisAlignment: CrossAxisAlignment.start,
++      children: [
++        Container(
++          width: 38,
++          height: 38,
++          decoration: BoxDecoration(
++            color: Colors.white,
++            borderRadius: BorderRadius.circular(8),
++            border: Border.all(color: const Color(0xFFC9D8D0)),
++          ),
++          child: Icon(icon, size: 21, color: const Color(0xFF174D3C)),
++        ),
++        const SizedBox(width: 11),
++        Expanded(
++          child: Column(
++            crossAxisAlignment: CrossAxisAlignment.start,
++            children: [
++              Text(
++                title,
++                style: const TextStyle(
++                  fontWeight: FontWeight.w800,
++                  color: Color(0xFF174D3C),
++                ),
++              ),
++              const SizedBox(height: 2),
++              Text(place, style: const TextStyle(fontWeight: FontWeight.w700)),
++              const SizedBox(height: 2),
++              Text(
++                address,
++                style: const TextStyle(fontSize: 12, color: Color(0xFF5F7269)),
++              ),
++              const SizedBox(height: 6),
++              _ActionButton(
++                action: ContactAction(
++                  label: 'Cómo llegar',
++                  url: mapsUrl,
++                  icon: 'web',
++                ),
++              ),
++            ],
++          ),
++        ),
++      ],
++    );
++  }
++}
++
++class _UsefulInformationCard extends StatelessWidget {
++  const _UsefulInformationCard();
++
++  @override
++  Widget build(BuildContext context) {
++    return Card(
++      child: Padding(
++        padding: const EdgeInsets.all(16),
++        child: Column(
++          crossAxisAlignment: CrossAxisAlignment.start,
++          children: [
++            const Row(
++              children: [
++                Icon(Icons.info_rounded, color: Color(0xFF174D3C)),
++                SizedBox(width: 10),
++                Text(
++                  'Información útil',
++                  style: TextStyle(
++                    fontSize: 18,
++                    fontWeight: FontWeight.w800,
++                    color: Color(0xFF174D3C),
++                  ),
++                ),
++              ],
++            ),
++            const SizedBox(height: 8),
++            const Text(
++              'Consultá el portal municipal para revisar atractivos, servicios y novedades turísticas antes de salir.',
++              style: TextStyle(color: Color(0xFF5F7269), fontSize: 13),
++            ),
++            const SizedBox(height: 12),
++            Wrap(
++              spacing: 8,
++              runSpacing: 8,
++              children: tourismActions
++                  .map((action) => _ActionButton(action: action))
++                  .toList(growable: false),
++            ),
++          ],
++        ),
++      ),
++    );
++  }
++}
++
+ class _HighlightsGrid extends StatelessWidget {
+   const _HighlightsGrid();
+ 
+@@ -827,6 +999,7 @@
+     required this.favorites,
+     required this.onFavoriteToggle,
+     this.onOpenMap,
++    this.notice,
+   });
+ 
+   final String title;
+@@ -835,6 +1008,7 @@
+   final Set<String> favorites;
+   final ValueChanged<String> onFavoriteToggle;
+   final VoidCallback? onOpenMap;
++  final String? notice;
+ 
+   @override
+   Widget build(BuildContext context) {
+@@ -846,7 +1020,40 @@
+           subtitle,
+           style: const TextStyle(fontSize: 15, color: Color(0xFF5F7269)),
+         ),
+-        const SizedBox(height: 16),
++        const SizedBox(height: 12),
++        if (notice != null) ...[
++          Container(
++            width: double.infinity,
++            padding: const EdgeInsets.all(12),
++            decoration: BoxDecoration(
++              color: const Color(0xFFFFF8E7),
++              borderRadius: BorderRadius.circular(8),
++              border: Border.all(color: const Color(0xFFE8D9AF)),
++            ),
++            child: Row(
++              crossAxisAlignment: CrossAxisAlignment.start,
++              children: [
++                const Icon(
++                  Icons.info_outline_rounded,
++                  size: 19,
++                  color: Color(0xFF7A6125),
++                ),
++                const SizedBox(width: 9),
++                Expanded(
++                  child: Text(
++                    notice!,
++                    style: const TextStyle(
++                      fontSize: 12,
++                      color: Color(0xFF5B4A22),
++                    ),
++                  ),
++                ),
++              ],
++            ),
++          ),
++          const SizedBox(height: 16),
++        ] else
++          const SizedBox(height: 4),
+         if (onOpenMap != null) ...[
+           SizedBox(
+             width: double.infinity,
+@@ -1096,6 +1303,8 @@
+       OpportunityTag.practical => ('Práctico', const Color(0xFFE9F4E6)),
+       OpportunityTag.paseo => ('Para visitar', const Color(0xFFE7EFFA)),
+       OpportunityTag.highlighted => ('Recomendado', const Color(0xFFE4F5EB)),
++      OpportunityTag.culture => ('Cultural', const Color(0xFFF1E7F7)),
++      OpportunityTag.outdoors => ('Al aire libre', const Color(0xFFE3F2E9)),
+     };
+     return Container(
+       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+diff -ru /mnt/data/paseos_work_backup/lib/src/data.dart /mnt/data/paseos_work/lib/src/data.dart
+--- /mnt/data/paseos_work_backup/lib/src/data.dart	2026-07-10 10:18:34.000000000 +0000
++++ /mnt/data/paseos_work/lib/src/data.dart	2026-07-10 10:27:50.555516250 +0000
+@@ -35,7 +35,8 @@
+   'Para una ubicación céntrica, revisá Centro Plaza Hotel, Hotel Federico I y Hotel Florida.',
+   'Si viajás en grupo, compará departamentos, casas turísticas y habitaciones múltiples.',
+   'Para comer entre actividades, priorizá viandas y rotiserías con pedido anticipado.',
+-  'El jueves 13 la apertura es en Hipólito Yrigoyen 1352; el viernes 14, las mesas son en Av. Monseñor Tavella 1424.',
++  'La apertura y las mesas se realizan en sedes distintas; revisá el bloque del Encuentro en Inicio.',
++  'Antes de visitar museos, termas o Salto Grande, confirmá horarios, acceso y condiciones vigentes.',
+ ];
+ 
+ const cannedMessage =
+@@ -44,6 +45,33 @@
+     'final por noche, servicios incluidos, horarios de ingreso y salida, y condiciones '
+     'de reserva. ¿Podrían enviarme esa información? Gracias.';
+ 
++const encounterActions = <ContactAction>[
++  ContactAction(
++    label: 'Consultas del Encuentro',
++    url: 'mailto:historiadeentrerios.ines@gmail.com',
++    icon: 'mail',
++  ),
++  ContactAction(
++    label: 'Información oficial',
++    url:
++        'https://ines.conicet.gov.ar/iii-encuentro-sobre-historia-de-entre-rios/',
++    icon: 'web',
++  ),
++];
++
++const tourismActions = <ContactAction>[
++  ContactAction(
++    label: 'Portal de Turismo',
++    url: 'https://www.concordia.gob.ar/turismo',
++    icon: 'web',
++  ),
++  ContactAction(
++    label: 'Atractivos oficiales',
++    url: 'https://www.concordia.gob.ar/turismo/atractivos',
++    icon: 'web',
++  ),
++];
++
+ const opportunities = <OpportunityItem>[
+   OpportunityItem(
+     id: 'centro-plaza',
+@@ -770,169 +798,188 @@
+     ],
+   ),
+   OpportunityItem(
+-    id: 'sede-profesorado',
+-    title: 'Profesorado Superior de Ciencias Sociales',
+-    subtitle: 'Sede de apertura · Hipólito Yrigoyen 1352',
++    id: 'parque-san-carlos',
++    title: 'Parque y Castillo San Carlos',
++    subtitle: 'Naturaleza, patrimonio y El Principito',
+     description:
+-        'Apertura del III Encuentro sobre Historia de Entre Ríos. Jueves 13 de agosto, a las 18:30, con cine debate y proyección del documental «Pasó en el Delta».',
++        'Área natural protegida de 98 hectáreas, ubicada a pocos minutos del centro. Dentro del parque se encuentran las ruinas del Castillo San Carlos, vinculadas con la estadía de Antoine de Saint-Exupéry en Concordia.',
+     category: OpportunityCategory.places,
+-    latitude: -31.3848811,
+-    longitude: -58.0129170,
+-    mapAddress: 'Hipólito Yrigoyen 1352',
+-    tags: [OpportunityTag.paseo, OpportunityTag.highlighted],
+-    highlights: [
+-      'Sede de apertura y cine debate',
+-      'Jueves 13 de agosto, a las 18:30',
+-      'Proyección del documental «Pasó en el Delta»',
++    latitude: -31.3661114,
++    longitude: -57.9985275,
++    mapAddress: 'Parque San Carlos, Concordia',
++    tags: [
++      OpportunityTag.paseo,
++      OpportunityTag.outdoors,
++      OpportunityTag.highlighted,
++    ],
++    highlights: [
++      'Área protegida con senderos, miradores y espacios verdes',
++      'Incluye el Castillo San Carlos y referencias a El Principito',
++      'Adecuado para una recorrida de media tarde',
+     ],
+     actions: [
+       ContactAction(
+         label: 'Cómo llegar',
+         url:
+-            'https://www.google.com/maps/search/?api=1&query=Hip%C3%B3lito+Yrigoyen+1352+Concordia',
++            'https://www.google.com/maps/search/?api=1&query=Parque+San+Carlos+Concordia+Entre+R%C3%ADos',
+         icon: 'web',
+       ),
+       ContactAction(
+-        label: 'Consultas del Encuentro',
+-        url: 'mailto:historiadeentrerios.ines@gmail.com',
+-        icon: 'mail',
+-      ),
+-      ContactAction(
+-        label: 'Información oficial',
++        label: 'Guía oficial',
+         url:
+-            'https://ines.conicet.gov.ar/iii-encuentro-sobre-historia-de-entre-rios/',
++            'https://www.concordia.gob.ar/turismo/atractivos/parque-san-carlos',
+         icon: 'web',
+       ),
+     ],
++    note:
++        'Es un paseo principalmente al aire libre. Revisá el pronóstico y consultá las condiciones de acceso al Castillo antes de ir.',
+   ),
+   OpportunityItem(
+-    id: 'sede-fcad',
+-    title: 'FCAD · UNER',
+-    subtitle: 'Sede de mesas temáticas · Av. Monseñor Tavella 1424',
++    id: 'costanera',
++    title: 'Costanera de Concordia',
++    subtitle: 'Paseo urbano junto al río Uruguay',
+     description:
+-        'Mesas temáticas y exposiciones del III Encuentro. Viernes 14 de agosto, desde las 8:00, en la Facultad de Ciencias de la Administración de la UNER.',
++        'Sector ribereño para caminar, descansar y recorrer espacios como el Parque Mitre. Incluye un circuito de movilidad sustentable señalizado de aproximadamente tres kilómetros.',
+     category: OpportunityCategory.places,
+-    latitude: -31.3817858,
+-    longitude: -58.0229796,
+-    mapAddress: 'Av. Monseñor Tavella 1424',
+-    tags: [OpportunityTag.paseo, OpportunityTag.highlighted],
+-    highlights: [
+-      'Sede principal de mesas y exposiciones',
+-      'Actividades desde las 8:00 del viernes 14 de agosto',
+-      'Facultad de Ciencias de la Administración',
++    latitude: -31.4025007,
++    longitude: -58.0051035,
++    mapAddress: 'Costanera de Concordia',
++    tags: [OpportunityTag.paseo, OpportunityTag.outdoors],
++    highlights: [
++      'Alternativa cercana para una visita breve',
++      'Circuito al aire libre para caminar o andar en bicicleta',
++      'Se puede combinar con gastronomía y otros puntos del centro',
+     ],
+     actions: [
+       ContactAction(
+         label: 'Cómo llegar',
+         url:
+-            'https://www.google.com/maps/search/?api=1&query=Av.+Monse%C3%B1or+Tavella+1424+Concordia',
++            'https://www.google.com/maps/search/?api=1&query=Costanera+de+Concordia+Entre+R%C3%ADos',
+         icon: 'web',
+       ),
+       ContactAction(
+-        label: 'Consultas del Encuentro',
+-        url: 'mailto:historiadeentrerios.ines@gmail.com',
+-        icon: 'mail',
+-      ),
+-      ContactAction(
+-        label: 'Información oficial',
+-        url:
+-            'https://ines.conicet.gov.ar/iii-encuentro-sobre-historia-de-entre-rios/',
++        label: 'Guía oficial',
++        url: 'https://www.concordia.gob.ar/turismo/atractivos/costanera',
+         icon: 'web',
+       ),
+     ],
++    note:
++        'La experiencia depende del clima y del estado del paseo ribereño. Consultá avisos locales si hubo lluvias o crecidas.',
+   ),
+   OpportunityItem(
+-    id: 'parque-san-carlos',
+-    title: 'Parque San Carlos',
+-    subtitle: 'Naturaleza e historia en un paseo emblemático',
++    id: 'museo-arruabarrena',
++    title: 'Museo Regional Palacio Arruabarrena',
++    subtitle: 'Historia regional en un palacio de comienzos del siglo XX',
+     description:
+-        'Parque urbano con espacios verdes, senderos y referencias históricas vinculadas con la ciudad.',
++        'Museo municipal ubicado frente a la Plaza Urquiza, en un edificio construido entre 1916 y 1919. Sus salas reúnen objetos, fotografías y testimonios vinculados con la historia de Concordia y la región.',
+     category: OpportunityCategory.places,
+-    latitude: -31.3661114,
+-    longitude: -57.9985275,
+-    mapAddress: 'Parque San Carlos',
+-    tags: [OpportunityTag.paseo, OpportunityTag.highlighted],
++    latitude: -31.3914250,
++    longitude: -58.0174850,
++    mapAddress: 'Ramírez y Entre Ríos, Concordia',
++    tags: [
++      OpportunityTag.paseo,
++      OpportunityTag.culture,
++      OpportunityTag.highlighted,
++    ],
+     highlights: [
+-      'Uno de los paseos representativos de la ciudad',
+-      'Adecuado para recorrer durante una tarde libre',
+-      'Se puede combinar con la Costanera o una salida gastronómica',
++      'Propuesta especialmente vinculada con la historia local',
++      'Edificio patrimonial frente a la Plaza Urquiza',
++      'Opción céntrica y adecuada para una visita breve',
+     ],
+     actions: [
+       ContactAction(
+-        label: 'Más información',
++        label: 'Cómo llegar',
+         url:
+-            'https://www.concordia.gob.ar/turismo/atractivos/parque-san-carlos',
++            'https://www.google.com/maps/search/?api=1&query=Museo+Regional+Palacio+Arruabarrena+Concordia',
+         icon: 'web',
+       ),
+-    ],
+-  ),
+-  OpportunityItem(
+-    id: 'costanera',
+-    title: 'Costanera',
+-    subtitle: 'Paseo al aire libre junto al río',
+-    description:
+-        'Paseo junto al río para caminar, descansar y aprovechar un momento libre durante el Encuentro.',
+-    category: OpportunityCategory.places,
+-    latitude: -31.4025007,
+-    longitude: -58.0051035,
+-    mapAddress: 'Costanera de Concordia',
+-    tags: [OpportunityTag.paseo],
+-    highlights: [
+-      'Acceso sencillo',
+-      'Se puede combinar con comida o merienda',
+-      'Ideal para una visita corta',
+-    ],
+-    actions: [
+       ContactAction(
+-        label: 'Más información',
+-        url: 'https://www.concordia.gob.ar/turismo/atractivos/costanera',
++        label: 'Guía oficial',
++        url:
++            'https://www.concordia.gob.ar/turismo/atractivos/museos/museo-arruabarrena',
+         icon: 'web',
+       ),
+     ],
++    note:
++        'Los horarios de museos pueden modificarse por actividades especiales o feriados. Confirmalos antes de organizar la visita.',
+   ),
+   OpportunityItem(
+-    id: 'termas',
+-    title: 'Termas',
+-    subtitle: 'Una propuesta termal para el invierno',
++    id: 'museo-salto-grande',
++    title: 'Museo y Centro Cultural Salto Grande',
++    subtitle: 'Historia, tecnología e integración binacional',
+     description:
+-        'Uno de los principales atractivos turísticos de Concordia, especialmente apropiado para una visita invernal.',
++        'Espacio situado dentro del Complejo Hidroeléctrico Salto Grande, a unos 18 kilómetros del centro. Presenta la historia de la represa, su construcción y su importancia para Argentina y Uruguay.',
+     category: OpportunityCategory.places,
+-    latitude: -31.2958618,
+-    longitude: -58.0030047,
+-    mapAddress: 'Termas de Concordia',
+-    tags: [OpportunityTag.paseo, OpportunityTag.thermal],
+-    highlights: [
+-      'Buena opción para los días fríos',
+-      'Requiere más tiempo y traslado que un paseo urbano',
+-      'Experiencia turística característica de la ciudad',
++    latitude: -31.2748667,
++    longitude: -57.9385917,
++    mapAddress: 'Complejo Hidroeléctrico Salto Grande, Ruta Nacional 015',
++    tags: [OpportunityTag.paseo, OpportunityTag.culture],
++    highlights: [
++      'Recorrido histórico y tecnológico sobre la represa',
++      'Aproximadamente 18 kilómetros desde el centro de Concordia',
++      'Requiere prever traslado y tiempo adicional',
+     ],
+     actions: [
+       ContactAction(
+-        label: 'Más información',
+-        url: 'https://www.concordia.gob.ar/turismo/atractivos/termas',
++        label: 'Cómo llegar',
++        url:
++            'https://www.google.com/maps/search/?api=1&query=Museo+y+Centro+Cultural+Salto+Grande+Concordia',
++        icon: 'web',
++      ),
++      ContactAction(
++        label: 'Sitio oficial',
++        url: 'https://delegacionargentinasg.org.ar/museo/',
++        icon: 'web',
++      ),
++      ContactAction(
++        label: 'Guía turística',
++        url:
++            'https://www.concordia.gob.ar/turismo/atractivos/museos/museo-salto-grande',
+         icon: 'web',
+       ),
+     ],
++    note:
++        'Verificá horarios, modalidad de ingreso y disponibilidad de visitas guiadas antes de trasladarte al complejo.',
+   ),
+   OpportunityItem(
+-    id: 'portal-turismo',
+-    title: 'Portal de Turismo',
+-    subtitle: 'Información oficial sobre paseos y servicios',
++    id: 'termas-vertiente',
++    title: 'Vertiente de la Concordia',
++    subtitle: 'Complejo termal al norte de la ciudad',
+     description:
+-        'Una referencia rápida para buscar alojamientos, gastronomía, actividades y otros servicios turísticos.',
++        'Complejo termal ubicado en el acceso hacia Salto Grande. Es una alternativa apropiada para una jornada de descanso durante el invierno.',
+     category: OpportunityCategory.places,
+-    tags: [OpportunityTag.paseo, OpportunityTag.practical],
++    latitude: -31.2955902,
++    longitude: -58.0041958,
++    mapAddress: 'Av. Monseñor Rösch y acceso a Salto Grande',
++    tags: [
++      OpportunityTag.paseo,
++      OpportunityTag.thermal,
++      OpportunityTag.outdoors,
++    ],
+     highlights: [
+-      'Información turística oficial',
+-      'Reúne recorridos y servicios',
+-      'Útil para seguir explorando opciones',
++      'Propuesta termal adecuada para los días fríos',
++      'Requiere más tiempo que un paseo urbano',
++      'Conviene consultar tarifas, servicios y piscinas habilitadas',
+     ],
+     actions: [
+       ContactAction(
+-        label: 'Más información',
+-        url: 'https://www.concordia.gob.ar/turismo',
++        label: 'Cómo llegar',
++        url:
++            'https://www.google.com/maps/search/?api=1&query=Vertiente+de+la+Concordia+Entre+R%C3%ADos',
++        icon: 'web',
++      ),
++      ContactAction(
++        label: 'Sitio web',
++        url: 'https://termasconcordia.com/',
++        icon: 'web',
++      ),
++      ContactAction(
++        label: 'Oferta termal oficial',
++        url: 'https://www.concordia.gob.ar/turismo/atractivos/termas',
+         icon: 'web',
+       ),
+     ],
++    note:
++        'La oferta, los horarios y las condiciones de funcionamiento pueden cambiar. Consultá directamente antes de viajar.',
+   ),
+ ];
+diff -ru /mnt/data/paseos_work_backup/lib/src/map_screen.dart /mnt/data/paseos_work/lib/src/map_screen.dart
+--- /mnt/data/paseos_work_backup/lib/src/map_screen.dart	2026-07-10 10:08:10.000000000 +0000
++++ /mnt/data/paseos_work/lib/src/map_screen.dart	2026-07-10 10:28:35.582975013 +0000
+@@ -374,7 +374,7 @@
+   String get _mapSummaryTitle => switch (_selectedCategory) {
+     OpportunityCategory.lodging => 'Dónde dormir',
+     OpportunityCategory.viandas => 'Dónde comer',
+-    OpportunityCategory.places => 'Paseos y sedes',
++    OpportunityCategory.places => 'Paseos y atractivos',
+     null => 'Lugares en el mapa',
+     OpportunityCategory.gastronomy => 'Dónde comer',
+   };
+@@ -665,6 +665,8 @@
+       OpportunityTag.practical => ('Práctico', const Color(0xFFE9F4E6)),
+       OpportunityTag.paseo => ('Para visitar', const Color(0xFFE7EFFA)),
+       OpportunityTag.highlighted => ('Recomendado', const Color(0xFFE4F5EB)),
++      OpportunityTag.culture => ('Cultural', const Color(0xFFF1E7F7)),
++      OpportunityTag.outdoors => ('Al aire libre', const Color(0xFFE3F2E9)),
+     };
+     return Container(
+       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+diff -ru /mnt/data/paseos_work_backup/lib/src/models.dart /mnt/data/paseos_work/lib/src/models.dart
+--- /mnt/data/paseos_work_backup/lib/src/models.dart	2026-07-10 10:03:25.000000000 +0000
++++ /mnt/data/paseos_work/lib/src/models.dart	2026-07-10 10:27:50.557005629 +0000
+@@ -1,94 +1,96 @@
+-enum OpportunityCategory { lodging, viandas, gastronomy, places }
+-
+-enum OpportunityTag {
+-  group,
+-  budget,
+-  direct,
+-  classic,
+-  thermal,
+-  practical,
+-  paseo,
+-  highlighted,
+-}
+-
+-/// Normaliza texto para búsquedas en español sin alterar el texto mostrado.
+-String normalizeSearchText(String value) {
+-  return value
+-      .trim()
+-      .toLowerCase()
+-      .replaceAll('á', 'a')
+-      .replaceAll('é', 'e')
+-      .replaceAll('í', 'i')
+-      .replaceAll('ó', 'o')
+-      .replaceAll('ú', 'u')
+-      .replaceAll('ü', 'u')
+-      .replaceAll('ñ', 'n');
+-}
+-
+-class ContactAction {
+-  const ContactAction({
+-    required this.label,
+-    required this.url,
+-    required this.icon,
+-  });
+-
+-  final String label;
+-  final String url;
+-  final String icon;
+-}
+-
+-class OpportunityItem {
+-  const OpportunityItem({
+-    required this.id,
+-    required this.title,
+-    required this.subtitle,
+-    required this.description,
+-    required this.category,
+-    required this.tags,
+-    required this.highlights,
+-    required this.actions,
+-    this.note,
+-    this.latitude,
+-    this.longitude,
+-    this.mapAddress,
+-  });
+-
+-  final String id;
+-  final String title;
+-  final String subtitle;
+-  final String description;
+-  final OpportunityCategory category;
+-  final List<OpportunityTag> tags;
+-  final List<String> highlights;
+-  final List<ContactAction> actions;
+-  final String? note;
+-  final double? latitude;
+-  final double? longitude;
+-  final String? mapAddress;
+-
+-  bool get hasMapLocation => latitude != null && longitude != null;
+-
+-  /// Índice de texto utilizado por el buscador de la aplicación.
+-  String get searchableText => normalizeSearchText(
+-    [
+-      title,
+-      subtitle,
+-      description,
+-      note ?? '',
+-      ...highlights,
+-      ...actions.map((action) => action.label),
+-    ].join(' '),
+-  );
+-}
+-
+-class HomeHighlight {
+-  const HomeHighlight({
+-    required this.title,
+-    required this.value,
+-    required this.caption,
+-  });
+-
+-  final String title;
+-  final String value;
+-  final String caption;
+-}
++enum OpportunityCategory { lodging, viandas, gastronomy, places }
++
++enum OpportunityTag {
++  group,
++  budget,
++  direct,
++  classic,
++  thermal,
++  practical,
++  paseo,
++  highlighted,
++  culture,
++  outdoors,
++}
++
++/// Normaliza texto para búsquedas en español sin alterar el texto mostrado.
++String normalizeSearchText(String value) {
++  return value
++      .trim()
++      .toLowerCase()
++      .replaceAll('á', 'a')
++      .replaceAll('é', 'e')
++      .replaceAll('í', 'i')
++      .replaceAll('ó', 'o')
++      .replaceAll('ú', 'u')
++      .replaceAll('ü', 'u')
++      .replaceAll('ñ', 'n');
++}
++
++class ContactAction {
++  const ContactAction({
++    required this.label,
++    required this.url,
++    required this.icon,
++  });
++
++  final String label;
++  final String url;
++  final String icon;
++}
++
++class OpportunityItem {
++  const OpportunityItem({
++    required this.id,
++    required this.title,
++    required this.subtitle,
++    required this.description,
++    required this.category,
++    required this.tags,
++    required this.highlights,
++    required this.actions,
++    this.note,
++    this.latitude,
++    this.longitude,
++    this.mapAddress,
++  });
++
++  final String id;
++  final String title;
++  final String subtitle;
++  final String description;
++  final OpportunityCategory category;
++  final List<OpportunityTag> tags;
++  final List<String> highlights;
++  final List<ContactAction> actions;
++  final String? note;
++  final double? latitude;
++  final double? longitude;
++  final String? mapAddress;
++
++  bool get hasMapLocation => latitude != null && longitude != null;
++
++  /// Índice de texto utilizado por el buscador de la aplicación.
++  String get searchableText => normalizeSearchText(
++    [
++      title,
++      subtitle,
++      description,
++      note ?? '',
++      ...highlights,
++      ...actions.map((action) => action.label),
++    ].join(' '),
++  );
++}
++
++class HomeHighlight {
++  const HomeHighlight({
++    required this.title,
++    required this.value,
++    required this.caption,
++  });
++
++  final String title;
++  final String value;
++  final String caption;
++}

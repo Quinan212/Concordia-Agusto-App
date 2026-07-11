@@ -1,0 +1,204 @@
+--- /mnt/data/original_revision/lib/src/data.dart	2026-07-10 10:08:10.000000000 +0000
++++ /mnt/data/work_lib/lib/src/data.dart	2026-07-10 10:18:34.938909910 +0000
+@@ -35,7 +35,7 @@
+   'Para una ubicación céntrica, revisá Centro Plaza Hotel, Hotel Federico I y Hotel Florida.',
+   'Si viajás en grupo, compará departamentos, casas turísticas y habitaciones múltiples.',
+   'Para comer entre actividades, priorizá viandas y rotiserías con pedido anticipado.',
+-  'Las actividades se realizan en Hipólito Yrigoyen 1352 y Av. Monseñor Tavella 1424.',
++  'El jueves 13 la apertura es en Hipólito Yrigoyen 1352; el viernes 14, las mesas son en Av. Monseñor Tavella 1424.',
+ ];
+ 
+ const cannedMessage =
+@@ -90,7 +90,7 @@
+     title: 'Casa di Aqua Apart Hotel',
+     subtitle: 'Departamentos para grupos de 3 a 6 personas',
+     description:
+-        'Alternativa para quienes viajan con colegas y prefieren compartir un departamento con mayor independencia.',
++        'Apart hotel ubicado en Av. Eva Perón 2452. Es una alternativa para quienes viajan con colegas y prefieren compartir un departamento con mayor independencia.',
+     category: OpportunityCategory.lodging,
+     tags: [OpportunityTag.group, OpportunityTag.direct, OpportunityTag.budget],
+     highlights: [
+@@ -100,6 +100,16 @@
+     ],
+     actions: [
+       ContactAction(
++        label: 'Llamar',
++        url: 'tel:03454273422',
++        icon: 'web',
++      ),
++      ContactAction(
++        label: 'WhatsApp',
++        url: 'https://wa.me/5493454015361',
++        icon: 'whatsapp',
++      ),
++      ContactAction(
+         label: 'Correo',
+         url: 'mailto:info@casadiaqua.com.ar',
+         icon: 'mail',
+@@ -156,7 +166,7 @@
+     title: 'Alojamiento Avenida',
+     subtitle: 'Casa de alquiler turístico con contacto directo',
+     description:
+-        'Casa de alquiler turístico para quienes prefieren una estadía independiente y una alternativa sencilla a la hotelería.',
++        'Casa de alquiler turístico ubicada en San Lorenzo Oeste 789, para quienes prefieren una estadía independiente y una alternativa sencilla a la hotelería.',
+     category: OpportunityCategory.lodging,
+     tags: [OpportunityTag.budget, OpportunityTag.direct],
+     highlights: [
+@@ -188,7 +198,7 @@
+     title: 'Hospedaje V.Z.',
+     subtitle: 'Hospedaje sencillo con contacto directo',
+     description:
+-        'Hospedaje de perfil sencillo para quienes buscan una alternativa de menor costo.',
++        'Hospedaje ubicado en Av. Monseñor Ricardo Rösch 4982, orientado a quienes buscan una alternativa sencilla y de menor costo.',
+     category: OpportunityCategory.lodging,
+     tags: [OpportunityTag.budget, OpportunityTag.direct],
+     highlights: [
+@@ -251,7 +261,7 @@
+     title: 'Casa Nebel',
+     subtitle: 'Casa turística para compartir con otras personas',
+     description:
+-        'Casa turística para grupos que prefieren alojarse juntos y compartir gastos.',
++        'Alquiler temporario con atención en Bv. San Lorenzo Este 973, pensado para grupos que prefieren alojarse juntos y compartir gastos.',
+     category: OpportunityCategory.lodging,
+     tags: [OpportunityTag.budget, OpportunityTag.direct, OpportunityTag.group],
+     highlights: [
+@@ -266,6 +276,16 @@
+         icon: 'whatsapp',
+       ),
+       ContactAction(
++        label: 'Correo',
++        url: 'mailto:casanebel@hotmail.com',
++        icon: 'mail',
++      ),
++      ContactAction(
++        label: 'Sitio web',
++        url: 'https://casanebel.com.ar/',
++        icon: 'web',
++      ),
++      ContactAction(
+         label: 'Guía oficial',
+         url:
+             'https://www.concordia.gob.ar/turismo/donde-dormir/casas-de-alquiler-tur%C3%ADstico/casa-nebel',
+@@ -328,9 +348,20 @@
+     actions: [
+       ContactAction(
+         label: 'WhatsApp',
+-        url: 'https://wa.me/5493455080276',
++        url: 'https://wa.me/5493454282644',
+         icon: 'whatsapp',
+       ),
++      ContactAction(
++        label: 'Correo',
++        url: 'mailto:hotelconcordiaentrerios@gmail.com',
++        icon: 'mail',
++      ),
++      ContactAction(
++        label: 'Guía oficial',
++        url:
++            'https://www.concordia.gob.ar/turismo/donde-dormir/hoteles-y-residenciales/residencial-hotel-concordia',
++        icon: 'web',
++      ),
+     ],
+   ),
+   OpportunityItem(
+@@ -717,18 +748,18 @@
+     title: 'Richmond Street Food Bar',
+     subtitle: 'Opción urbana en Mercado Plaza',
+     description:
+-        'Propuesta informal y contemporánea dentro del circuito gastronómico de Mercado Plaza.',
++        'Propuesta informal dentro de Mercado Plaza, en 1.º de Mayo 101. Abre todos los días desde las 11:00 hasta el cierre, según su ficha institucional.',
+     category: OpportunityCategory.gastronomy,
+     tags: [OpportunityTag.direct, OpportunityTag.paseo],
+     highlights: [
+-      'Consultas por WhatsApp',
+-      'Ambiente casual',
+-      'Buena ubicación para una salida breve',
++      'Contacto directo por WhatsApp',
++      'Ubicado en Mercado Plaza',
++      'Horario publicado: todos los días desde las 11:00',
+     ],
+     actions: [
+       ContactAction(
+         label: 'WhatsApp',
+-        url: 'https://wa.me/5493454146822',
++        url: 'https://wa.me/5493454063587',
+         icon: 'whatsapp',
+       ),
+       ContactAction(
+@@ -750,9 +781,9 @@
+     mapAddress: 'Hipólito Yrigoyen 1352',
+     tags: [OpportunityTag.paseo, OpportunityTag.highlighted],
+     highlights: [
+-      'Sede oficial del Encuentro',
+-      'Cine debate de apertura el jueves 13 de agosto',
+-      'Edificio del Profesorado Superior de Ciencias Sociales',
++      'Sede de apertura y cine debate',
++      'Jueves 13 de agosto, a las 18:30',
++      'Proyección del documental «Pasó en el Delta»',
+     ],
+     actions: [
+       ContactAction(
+@@ -761,6 +792,17 @@
+             'https://www.google.com/maps/search/?api=1&query=Hip%C3%B3lito+Yrigoyen+1352+Concordia',
+         icon: 'web',
+       ),
++      ContactAction(
++        label: 'Consultas del Encuentro',
++        url: 'mailto:historiadeentrerios.ines@gmail.com',
++        icon: 'mail',
++      ),
++      ContactAction(
++        label: 'Información oficial',
++        url:
++            'https://ines.conicet.gov.ar/iii-encuentro-sobre-historia-de-entre-rios/',
++        icon: 'web',
++      ),
+     ],
+   ),
+   OpportunityItem(
+@@ -786,6 +828,17 @@
+             'https://www.google.com/maps/search/?api=1&query=Av.+Monse%C3%B1or+Tavella+1424+Concordia',
+         icon: 'web',
+       ),
++      ContactAction(
++        label: 'Consultas del Encuentro',
++        url: 'mailto:historiadeentrerios.ines@gmail.com',
++        icon: 'mail',
++      ),
++      ContactAction(
++        label: 'Información oficial',
++        url:
++            'https://ines.conicet.gov.ar/iii-encuentro-sobre-historia-de-entre-rios/',
++        icon: 'web',
++      ),
+     ],
+   ),
+   OpportunityItem(
+@@ -860,27 +913,6 @@
+         icon: 'web',
+       ),
+     ],
+-  ),
+-  OpportunityItem(
+-    id: 'concorpass',
+-    title: 'ConcorPass',
+-    subtitle: 'Beneficios y propuestas turísticas desde el celular',
+-    description:
+-        'Permite consultar beneficios y descubrir propuestas turísticas oficiales durante la estadía.',
+-    category: OpportunityCategory.places,
+-    tags: [OpportunityTag.paseo, OpportunityTag.practical],
+-    highlights: [
+-      'Herramienta oficial de turismo',
+-      'Útil para encontrar propuestas durante tu visita',
+-      'Pensada para consultar desde el celular',
+-    ],
+-    actions: [
+-      ContactAction(
+-        label: 'Más información',
+-        url: 'https://www.concordia.gob.ar/turismo/concorpass',
+-        icon: 'web',
+-      ),
+-    ],
+   ),
+   OpportunityItem(
+     id: 'portal-turismo',

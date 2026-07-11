@@ -9,6 +9,8 @@ enum OpportunityTag {
   practical,
   paseo,
   highlighted,
+  culture,
+  outdoors,
 }
 
 /// Normaliza texto para búsquedas en español sin alterar el texto mostrado.
@@ -51,6 +53,7 @@ class OpportunityItem {
     this.latitude,
     this.longitude,
     this.mapAddress,
+    this.brandAsset,
   });
 
   final String id;
@@ -65,6 +68,7 @@ class OpportunityItem {
   final double? latitude;
   final double? longitude;
   final String? mapAddress;
+  final String? brandAsset;
 
   bool get hasMapLocation => latitude != null && longitude != null;
 

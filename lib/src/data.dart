@@ -4,22 +4,22 @@ final homeHighlights = List<HomeHighlight>.unmodifiable([
   HomeHighlight(
     title: 'Dónde dormir',
     value: _countOpportunities(OpportunityCategory.lodging),
-    caption: 'Opciones para distintos presupuestos y formas de viaje',
+    caption: 'Opciones para distintos presupuestos y tipos de viaje',
   ),
   HomeHighlight(
     title: 'Comida práctica',
     value: _countOpportunities(OpportunityCategory.viandas),
-    caption: 'Opciones para comer entre las actividades del Encuentro',
+    caption: 'Opciones para comer durante las jornadas del Encuentro',
   ),
   HomeHighlight(
     title: 'Gastronomía',
     value: _countOpportunities(OpportunityCategory.gastronomy),
-    caption: 'Restaurantes, bares y pizzerías para disfrutar la ciudad',
+    caption: 'Restaurantes, bares y pizzerías para hacer una salida',
   ),
   HomeHighlight(
     title: 'Paseos',
     value: _countOpportunities(OpportunityCategory.places),
-    caption: 'Lugares para conocer durante tus ratos libres',
+    caption: 'Paseos y sitios de interés para el tiempo libre',
   ),
 ]);
 
@@ -31,25 +31,49 @@ String _countOpportunities(OpportunityCategory category) {
 }
 
 const topRecommendations = <String>[
-  'Si buscás una ubicación céntrica, empezá por Centro Plaza Hotel.',
-  'Compará Casa Di Aqua con casas de alquiler si viajás con otras personas.',
-  'Para una comida rápida entre actividades, revisá las viandas del centro.',
-  'Costanera y Parque San Carlos son buenas opciones para aprovechar una tarde libre.',
-  'Las sedes del Encuentro están en Yrigoyen 1352 y Av. Tavella 1424.',
+  'Consultá disponibilidad, precio final y condiciones de reserva antes de elegir.',
+  'Para una ubicación céntrica, revisá Centro Plaza Hotel, Hotel Federico I y Hotel Florida.',
+  'Si viajás en grupo, compará departamentos, casas turísticas y habitaciones múltiples.',
+  'Para comer entre actividades, priorizá viandas y rotiserías con pedido anticipado.',
+  'La apertura y las mesas se realizan en sedes distintas; revisá el bloque del Encuentro en Inicio.',
+  'Antes de visitar museos, termas o Salto Grande, confirmá horarios, acceso y condiciones vigentes.',
 ];
 
 const cannedMessage =
-    'Hola, voy a asistir al III Encuentro sobre Historia de Entre Ríos en Concordia '
-    'durante agosto de 2026. Quisiera consultar disponibilidad, tarifa por noche y '
-    'servicios incluidos. ¿Podrían enviarme esa información? Gracias.';
+    'Hola. Voy a asistir al III Encuentro sobre Historia de Entre Ríos en Concordia, '
+    'los días 13 y 14 de agosto de 2026. Quisiera consultar disponibilidad, precio '
+    'final por noche, servicios incluidos, horarios de ingreso y salida, y condiciones '
+    'de reserva. ¿Podrían enviarme esa información? Gracias.';
+
+const encounterActions = <ContactAction>[
+  ContactAction(
+    label: 'Consultar',
+    url: 'mailto:historiadeentrerios.ines@gmail.com',
+    icon: 'mail',
+  ),
+  ContactAction(
+    label: 'Sitio oficial',
+    url:
+        'https://ines.conicet.gov.ar/iii-encuentro-sobre-historia-de-entre-rios/',
+    icon: 'web',
+  ),
+];
+
+const tourismActions = <ContactAction>[
+  ContactAction(
+    label: 'Guía turística oficial',
+    url: 'https://www.concordia.gob.ar/turismo',
+    icon: 'web',
+  ),
+];
 
 const opportunities = <OpportunityItem>[
   OpportunityItem(
     id: 'centro-plaza',
     title: 'Centro Plaza Hotel',
-    subtitle: 'Hotel céntrico con habitaciones y desayuno',
+    subtitle: 'Hotel céntrico con desayuno y cochera',
     description:
-        'Sobre La Rioja 543, esquina Buenos Aires. Una alternativa cómoda si querés alojarte en el centro y tener los principales servicios cerca.',
+        'Ubicado en La Rioja 543, esquina Buenos Aires. Su localización permite moverse a pie por el centro y acceder con facilidad a comercios y servicios.',
     category: OpportunityCategory.lodging,
     latitude: -31.3992923,
     longitude: -58.0148745,
@@ -60,9 +84,9 @@ const opportunities = <OpportunityItem>[
       OpportunityTag.highlighted,
     ],
     highlights: [
-      '27 habitaciones y 62 plazas',
-      'Desayuno incluido, bar y room service',
-      'Cochera cerrada sujeta a disponibilidad',
+      '27 habitaciones con capacidad total para 62 personas',
+      'Desayuno incluido, bar y servicio a la habitación',
+      'Cochera cerrada, sujeta a disponibilidad',
     ],
     actions: [
       ContactAction(
@@ -71,44 +95,55 @@ const opportunities = <OpportunityItem>[
         icon: 'whatsapp',
       ),
       ContactAction(
-        label: 'Mail',
+        label: 'Correo',
         url: 'mailto:info@centroplazahotel.com.ar',
         icon: 'mail',
       ),
       ContactAction(
-        label: 'Web',
+        label: 'Sitio web',
         url: 'https://centroplazahotel.com.ar/',
         icon: 'web',
       ),
     ],
-    note: 'Planta baja y primer piso; acceso al primer piso por escalera.',
+    note:
+        'El establecimiento tiene planta baja y primer piso. El acceso al primer piso es únicamente por escalera.',
   ),
   OpportunityItem(
     id: 'casa-di-aqua',
-    title: 'Casa Di Aqua Apart Hotel',
-    subtitle: 'Departamentos para compartir entre 3 y 6 personas',
+    title: 'Casa di Aqua Apart Hotel',
+    subtitle: 'Departamentos para grupos de 3 a 6 personas',
     description:
-        'Puede resultarte cómodo si viajás con colegas y prefieren compartir un departamento.',
+        'Apart hotel ubicado en Av. Eva Perón 2452. Es una alternativa para quienes viajan con colegas y prefieren compartir un departamento con mayor independencia.',
     category: OpportunityCategory.lodging,
     tags: [OpportunityTag.group, OpportunityTag.direct, OpportunityTag.budget],
     highlights: [
-      'Unidades para 3, 4, 5 y 6 personas',
-      'Permite alojarse en grupos pequeños',
-      'Tarifas disponibles en su sitio web',
+      'Departamentos para 3, 4, 5 o 6 personas',
+      'Permite compartir el alojamiento y dividir gastos',
+      'Las tarifas se consultan en el sitio web',
     ],
     actions: [
       ContactAction(
-        label: 'Mail',
+        label: 'Llamar',
+        url: 'tel:03454273422',
+        icon: 'web',
+      ),
+      ContactAction(
+        label: 'WhatsApp',
+        url: 'https://wa.me/5493454015361',
+        icon: 'whatsapp',
+      ),
+      ContactAction(
+        label: 'Correo',
         url: 'mailto:info@casadiaqua.com.ar',
         icon: 'mail',
       ),
       ContactAction(
-        label: 'Web',
+        label: 'Sitio web',
         url: 'https://casadiaqua.com.ar/',
         icon: 'web',
       ),
       ContactAction(
-        label: 'Tarifas',
+        label: 'Ver tarifas',
         url: 'https://casadiaqua.com.ar/tarifas/',
         icon: 'price',
       ),
@@ -119,7 +154,7 @@ const opportunities = <OpportunityItem>[
     title: 'El Bicho Negro Hostel',
     subtitle: 'Hostel económico con alojamiento compartido',
     description:
-        'Ideal si priorizás el precio y te resulta cómodo alojarte en un hostel.',
+        'Alternativa orientada a quienes priorizan un presupuesto ajustado y aceptan la dinámica de un hostel.',
     category: OpportunityCategory.lodging,
     latitude: -31.4022527,
     longitude: -58.0182346,
@@ -127,8 +162,8 @@ const opportunities = <OpportunityItem>[
     tags: [OpportunityTag.budget, OpportunityTag.direct, OpportunityTag.group],
     highlights: [
       'Contacto directo por WhatsApp',
-      'Opción orientada a presupuestos ajustados',
-      'Ambiente y servicios propios de un hostel',
+      'Alternativa para presupuestos ajustados',
+      'Consultá servicios, disponibilidad y normas de convivencia',
     ],
     actions: [
       ContactAction(
@@ -137,13 +172,13 @@ const opportunities = <OpportunityItem>[
         icon: 'whatsapp',
       ),
       ContactAction(
-        label: 'Guía',
+        label: 'Guía oficial',
         url:
             'https://www.concordia.gob.ar/turismo/donde-dormir/hostels/el-bicho-negro-hostel',
         icon: 'web',
       ),
       ContactAction(
-        label: 'Sitio',
+        label: 'Sitio web',
         url: 'https://www.elbichonegrohostel.com/',
         icon: 'web',
       ),
@@ -154,13 +189,13 @@ const opportunities = <OpportunityItem>[
     title: 'Alojamiento Avenida',
     subtitle: 'Casa de alquiler turístico con contacto directo',
     description:
-        'Puede servirte si preferís una casa de alquiler y buscás una alternativa sencilla a la hotelería.',
+        'Casa de alquiler turístico ubicada en San Lorenzo Oeste 789, para quienes prefieren una estadía independiente y una alternativa sencilla a la hotelería.',
     category: OpportunityCategory.lodging,
     tags: [OpportunityTag.budget, OpportunityTag.direct],
     highlights: [
       'Consultas por WhatsApp',
-      'Incluida en la guía turística oficial',
-      'Opción para considerar con presupuesto ajustado',
+      'Incluido en la guía turística oficial',
+      'Alternativa para un presupuesto ajustado',
     ],
     actions: [
       ContactAction(
@@ -169,12 +204,12 @@ const opportunities = <OpportunityItem>[
         icon: 'whatsapp',
       ),
       ContactAction(
-        label: 'Mail',
+        label: 'Correo',
         url: 'mailto:maraaldecoa87@gmail.com',
         icon: 'mail',
       ),
       ContactAction(
-        label: 'Guía',
+        label: 'Guía oficial',
         url:
             'https://www.concordia.gob.ar/turismo/donde-dormir/casas-de-alquiler-tur%C3%ADstico/alojamiento-avenida',
         icon: 'web',
@@ -186,12 +221,12 @@ const opportunities = <OpportunityItem>[
     title: 'Hospedaje V.Z.',
     subtitle: 'Hospedaje sencillo con contacto directo',
     description:
-        'Una alternativa para quienes buscan un alojamiento simple y posiblemente más económico.',
+        'Hospedaje ubicado en Av. Monseñor Ricardo Rösch 4982, orientado a quienes buscan una alternativa sencilla y de menor costo.',
     category: OpportunityCategory.lodging,
     tags: [OpportunityTag.budget, OpportunityTag.direct],
     highlights: [
       'Consultas por WhatsApp',
-      'También recibe consultas por correo',
+      'También permite consultas por correo',
       'Incluido en la guía turística oficial',
     ],
     actions: [
@@ -201,12 +236,12 @@ const opportunities = <OpportunityItem>[
         icon: 'whatsapp',
       ),
       ContactAction(
-        label: 'Mail',
+        label: 'Correo',
         url: 'mailto:hospedajeyquinchovz@gmail.com',
         icon: 'mail',
       ),
       ContactAction(
-        label: 'Guía',
+        label: 'Guía oficial',
         url:
             'https://www.concordia.gob.ar/turismo/donde-dormir/casas-de-alquiler-tur%C3%ADstico/hospedaje-vz-hospedaje-y-quincho',
         icon: 'web',
@@ -218,13 +253,13 @@ const opportunities = <OpportunityItem>[
     title: 'Termal del Lago',
     subtitle: 'Alojamiento con entorno y servicios termales',
     description:
-        'Buena opción si valorás la comodidad y querés sumar una experiencia termal a la estadía.',
+        'Alojamiento pensado para combinar la estadía con servicios y actividades termales.',
     category: OpportunityCategory.lodging,
     tags: [OpportunityTag.thermal, OpportunityTag.direct],
     highlights: [
       'Contacto por WhatsApp y correo',
-      'Servicios pensados para una estadía confortable',
-      'Interesante para combinar alojamiento y descanso',
+      'Servicios orientados al descanso',
+      'Permite combinar alojamiento y experiencia termal',
     ],
     actions: [
       ContactAction(
@@ -233,12 +268,12 @@ const opportunities = <OpportunityItem>[
         icon: 'whatsapp',
       ),
       ContactAction(
-        label: 'Mail',
+        label: 'Correo',
         url: 'mailto:consultas@termaldellago.net',
         icon: 'mail',
       ),
       ContactAction(
-        label: 'Web',
+        label: 'Sitio web',
         url: 'https://termaldellago.net/',
         icon: 'web',
       ),
@@ -249,7 +284,7 @@ const opportunities = <OpportunityItem>[
     title: 'Casa Nebel',
     subtitle: 'Casa turística para compartir con otras personas',
     description:
-        'Puede resultarte conveniente si viajás con colegas y prefieren alojarse juntos en una casa.',
+        'Alquiler temporario con atención en Bv. San Lorenzo Este 973, pensado para grupos que prefieren alojarse juntos y compartir gastos.',
     category: OpportunityCategory.lodging,
     tags: [OpportunityTag.budget, OpportunityTag.direct, OpportunityTag.group],
     highlights: [
@@ -264,7 +299,17 @@ const opportunities = <OpportunityItem>[
         icon: 'whatsapp',
       ),
       ContactAction(
-        label: 'Guía',
+        label: 'Correo',
+        url: 'mailto:casanebel@hotmail.com',
+        icon: 'mail',
+      ),
+      ContactAction(
+        label: 'Sitio web',
+        url: 'https://casanebel.com.ar/',
+        icon: 'web',
+      ),
+      ContactAction(
+        label: 'Guía oficial',
         url:
             'https://www.concordia.gob.ar/turismo/donde-dormir/casas-de-alquiler-tur%C3%ADstico/casa-nebel',
         icon: 'web',
@@ -274,9 +319,9 @@ const opportunities = <OpportunityItem>[
   OpportunityItem(
     id: 'hathor',
     title: 'Hathor Concordia',
-    subtitle: 'Hotel con servicios completos y atención directa',
+    subtitle: 'Hotel sobre la Ruta 14 con servicios completos',
     description:
-        'Una alternativa de perfil hotelero formal, útil si buscás mayor comodidad y servicios completos.',
+        'Ubicado fuera del centro, sobre la Ruta Nacional 14. Puede ser conveniente para quienes viajan en vehículo y priorizan servicios hoteleros.',
     category: OpportunityCategory.lodging,
     tags: [
       OpportunityTag.group,
@@ -285,8 +330,8 @@ const opportunities = <OpportunityItem>[
     ],
     highlights: [
       'Contacto por WhatsApp y correo',
-      'Hotel preparado también para viajes corporativos',
-      'Buena alternativa cuando preferís una estadía con más servicios',
+      'Servicios para turismo y viajes corporativos',
+      'Conviene considerar el traslado hacia las sedes',
     ],
     actions: [
       ContactAction(
@@ -295,19 +340,19 @@ const opportunities = <OpportunityItem>[
         icon: 'whatsapp',
       ),
       ContactAction(
-        label: 'Mail',
+        label: 'Correo',
         url: 'mailto:reservasconcordia@hathorhotels.com.ar',
         icon: 'mail',
       ),
-      ContactAction(label: 'Fijo', url: 'tel:03454222362', icon: 'web'),
+      ContactAction(label: 'Llamar', url: 'tel:03454222362', icon: 'web'),
       ContactAction(
-        label: 'Web',
+        label: 'Sitio web',
         url: 'https://www.hathorconcordia.com.ar/contacto/',
         icon: 'web',
       ),
     ],
     note:
-        'Ubicado sobre Ruta Nacional 14, km 264,5 (fuera del centro). Cuenta con piscinas de temporada; la climatizada abre en julio y fines de semana largos de invierno.',
+        'Ubicado sobre Ruta Nacional 14, km 264,5, fuera del centro. Consultá la disponibilidad de piscinas y otros servicios de temporada antes de reservar.',
   ),
   // --- Nuevos hoteles desde lista oficial ---
   OpportunityItem(
@@ -315,13 +360,13 @@ const opportunities = <OpportunityItem>[
     title: 'Residencial Hotel Concordia',
     subtitle: 'Hotel céntrico con estacionamiento y desayuno',
     description:
-        'Sobre La Rioja 518. Un hotel sencillo y bien ubicado para moverte por el centro durante los días del Encuentro.',
+        'Ubicado en La Rioja 518. Es una alternativa sencilla para moverse por el centro durante las jornadas del Encuentro.',
     category: OpportunityCategory.lodging,
     tags: [OpportunityTag.budget, OpportunityTag.direct],
     highlights: [
       'Estacionamiento, Wi-Fi y desayuno incluido',
       'Ubicación céntrica',
-      'Trato directo y sencillo',
+      'Contacto directo para reservas y consultas',
     ],
     actions: [
       ContactAction(
@@ -329,23 +374,34 @@ const opportunities = <OpportunityItem>[
         url: 'https://wa.me/5493454282644',
         icon: 'whatsapp',
       ),
+      ContactAction(
+        label: 'Correo',
+        url: 'mailto:hotelconcordiaentrerios@gmail.com',
+        icon: 'mail',
+      ),
+      ContactAction(
+        label: 'Guía oficial',
+        url:
+            'https://www.concordia.gob.ar/turismo/donde-dormir/hoteles-y-residenciales/residencial-hotel-concordia',
+        icon: 'web',
+      ),
     ],
   ),
   OpportunityItem(
     id: 'federico-i',
     title: 'Hotel Federico I',
-    subtitle: 'Habitaciones para todos los tamaños de grupo',
+    subtitle: 'Habitaciones individuales y para grupos',
     description:
-        'Sobre 1º de Mayo 248, a tres cuadras de Plaza 25 de Mayo. Ideal si viajás solo, en pareja o con un grupo de colegas.',
+        'Ubicado en 1.º de Mayo 248, a tres cuadras de la Plaza 25 de Mayo. Ofrece alternativas para personas solas, parejas y grupos.',
     category: OpportunityCategory.lodging,
     latitude: -31.3983556,
     longitude: -58.0138868,
     mapAddress: '1° de Mayo 248',
     tags: [OpportunityTag.group, OpportunityTag.direct],
     highlights: [
-      'Habitaciones single, dobles, triples, cuádruples y quíntuples',
-      'Baño privado con secador, TV LED/Smart',
-      'Tarifas directas publicadas en su sitio',
+      'Habitaciones individuales, dobles, triples, cuádruples y quíntuples',
+      'Baño privado, secador de pelo y TV LED o Smart TV',
+      'Consultá tarifas y disponibilidad de forma directa',
     ],
     actions: [
       ContactAction(
@@ -353,7 +409,7 @@ const opportunities = <OpportunityItem>[
         url: 'https://wa.me/5493454012280',
         icon: 'whatsapp',
       ),
-      ContactAction(label: 'Fijo', url: 'tel:03454230847', icon: 'web'),
+      ContactAction(label: 'Llamar', url: 'tel:03454230847', icon: 'web'),
     ],
   ),
   OpportunityItem(
@@ -361,7 +417,7 @@ const opportunities = <OpportunityItem>[
     title: 'Hotel Florida',
     subtitle: 'Hotel céntrico con estacionamiento',
     description:
-        'Sobre Hipólito Yrigoyen 717. Bien ubicado, con habitaciones individuales, dobles, triples y cuádruples.',
+        'Ubicado en Hipólito Yrigoyen 717. Cuenta con habitaciones individuales, dobles, triples y cuádruples.',
     category: OpportunityCategory.lodging,
     latitude: -31.3961294,
     longitude: -58.0152538,
@@ -370,7 +426,7 @@ const opportunities = <OpportunityItem>[
     highlights: [
       'Estacionamiento, Wi-Fi y desayuno incluido',
       'Baño privado y TV en habitaciones',
-      'Buena opción para grupos chicos',
+      'Alternativa para personas solas, parejas y grupos pequeños',
     ],
     actions: [
       ContactAction(
@@ -378,7 +434,7 @@ const opportunities = <OpportunityItem>[
         url: 'https://wa.me/5493456026078',
         icon: 'whatsapp',
       ),
-      ContactAction(label: 'Fijo', url: 'tel:03454216536', icon: 'web'),
+      ContactAction(label: 'Llamar', url: 'tel:03454216536', icon: 'web'),
     ],
   ),
   OpportunityItem(
@@ -386,7 +442,7 @@ const opportunities = <OpportunityItem>[
     title: "D'Charrúas Hostel",
     subtitle: 'Hostel céntrico con cocina compartida',
     description:
-        'Sobre Aristóbulo del Valle 31. Ideal si viajás con presupuesto ajustado y querés un ambiente más social.',
+        'Ubicado en Aristóbulo del Valle 31. Está orientado a quienes viajan con presupuesto ajustado y valoran un ambiente social.',
     category: OpportunityCategory.lodging,
     tags: [OpportunityTag.budget, OpportunityTag.direct],
     highlights: [
@@ -407,7 +463,7 @@ const opportunities = <OpportunityItem>[
     title: 'Apart Avenida',
     subtitle: 'Apart hotel con modalidad independiente',
     description:
-        'Sobre Av. Gerardo Yoya 83 (ex J. B. Justo). Unidad con cocina para quienes prefieren resolver sus propias comidas.',
+        'Ubicado en Av. Gerardo Yoya 83 (antes J. B. Justo). Sus unidades con cocina permiten organizar las comidas con mayor independencia.',
     category: OpportunityCategory.lodging,
     latitude: -31.3847940,
     longitude: -58.0113675,
@@ -416,7 +472,7 @@ const opportunities = <OpportunityItem>[
     highlights: [
       'Unidades con cocina, aire acondicionado y calefacción',
       'Wi-Fi y estacionamiento',
-      'Modalidad independiente, ideal para estadías medias',
+      'Modalidad independiente para estadías de varios días',
     ],
     actions: [
       ContactAction(
@@ -429,15 +485,15 @@ const opportunities = <OpportunityItem>[
   OpportunityItem(
     id: 'centro-apart',
     title: 'Concordia Centro Apart',
-    subtitle: 'Apart céntrico con Wi-Fi',
+    subtitle: 'Departamentos tipo apart en el centro',
     description:
-        'Sobre Carlos Pellegrini 483. Un apart bien ubicado para quienes buscan independencia en pleno centro.',
+        'Ubicado en Carlos Pellegrini 483. Ofrece una modalidad independiente en pleno centro.',
     category: OpportunityCategory.lodging,
     tags: [OpportunityTag.practical, OpportunityTag.direct],
     highlights: [
       'Wi-Fi y estacionamiento',
       'Ubicación céntrica',
-      'Modalidad apart con flexibilidad',
+      'Modalidad independiente y flexible',
     ],
     actions: [
       ContactAction(
@@ -452,7 +508,7 @@ const opportunities = <OpportunityItem>[
     title: 'Tus Viandas Concordia',
     subtitle: 'Viandas semanales para llevar',
     description:
-        'Sobre Hipólito Yrigoyen 1557. Viandas semanales, tacos, hamburguesas, empanadas y otros platos. Delivery y retiro disponibles.',
+        'Ubicado en Hipólito Yrigoyen 1557. Ofrece viandas semanales, tacos, hamburguesas, empanadas y otros platos, con entrega y retiro.',
     category: OpportunityCategory.viandas,
     tags: [
       OpportunityTag.practical,
@@ -461,7 +517,7 @@ const opportunities = <OpportunityItem>[
     ],
     highlights: [
       'Viandas semanales con variedad de platos',
-      'Delivery y retiro publicados',
+      'Entrega y retiro disponibles',
       'Práctico para almorzar o cenar sin perder tiempo',
     ],
     actions: [
@@ -471,12 +527,12 @@ const opportunities = <OpportunityItem>[
         icon: 'whatsapp',
       ),
       ContactAction(
-        label: 'Mail',
+        label: 'Correo',
         url: 'mailto:tusviandasconcordia@gmail.com',
         icon: 'mail',
       ),
       ContactAction(
-        label: 'Ficha',
+        label: 'Más información',
         url: 'https://www.concordia.gob.ar/node/11393',
         icon: 'web',
       ),
@@ -487,13 +543,13 @@ const opportunities = <OpportunityItem>[
     title: 'Yantar Rotisería',
     subtitle: 'Rotisería para una comida completa y práctica',
     description:
-        'Buena opción para comprar comida preparada entre actividades o al terminar la jornada.',
+        'Rotisería para comprar comida preparada entre actividades o al finalizar la jornada.',
     category: OpportunityCategory.viandas,
     tags: [OpportunityTag.practical, OpportunityTag.direct],
     highlights: [
       'Pedidos y consultas por WhatsApp',
-      'También dispone de correo',
-      'Útil para resolver una comida sin sentarte en un restaurante',
+      'También recibe consultas por correo',
+      'Permite resolver una comida sin dedicar tiempo a una atención en salón',
     ],
     actions: [
       ContactAction(
@@ -502,12 +558,12 @@ const opportunities = <OpportunityItem>[
         icon: 'whatsapp',
       ),
       ContactAction(
-        label: 'Mail',
+        label: 'Correo',
         url: 'mailto:yantarrotiseria@gmail.com',
         icon: 'mail',
       ),
       ContactAction(
-        label: 'Ficha',
+        label: 'Más información',
         url: 'https://www.concordia.gob.ar/node/267',
         icon: 'web',
       ),
@@ -518,7 +574,7 @@ const opportunities = <OpportunityItem>[
     title: 'Yantar de la Costa',
     subtitle: 'Comida preparada cerca de la Costanera',
     description:
-        'Puede servirte para combinar una comida práctica con un paseo por la Costanera.',
+        'Alternativa para combinar una comida práctica con un paseo por la Costanera.',
     category: OpportunityCategory.viandas,
     tags: [OpportunityTag.practical, OpportunityTag.paseo],
     highlights: [
@@ -533,12 +589,12 @@ const opportunities = <OpportunityItem>[
         icon: 'whatsapp',
       ),
       ContactAction(
-        label: 'Mail',
+        label: 'Correo',
         url: 'mailto:yantarrotiseria@gmail.com',
         icon: 'mail',
       ),
       ContactAction(
-        label: 'Ficha',
+        label: 'Más información',
         url: 'https://www.concordia.gob.ar/node/271',
         icon: 'web',
       ),
@@ -548,13 +604,13 @@ const opportunities = <OpportunityItem>[
   OpportunityItem(
     id: 'almacen-viandas',
     title: 'El Almacén de Viandas',
-    subtitle: 'Viandas saludables, light y veggie',
+    subtitle: 'Viandas saludables y opciones vegetarianas',
     description:
-        'Sobre Ramírez 324. Viandas saludables, light, ensaladas, keto y veggie. Pedidos por WhatsApp.',
+        'Ubicado en Ramírez 324. Ofrece viandas, ensaladas y opciones livianas, cetogénicas y vegetarianas. Los pedidos se realizan por WhatsApp.',
     category: OpportunityCategory.viandas,
     tags: [OpportunityTag.practical, OpportunityTag.direct],
     highlights: [
-      'Viandas saludables, light, keto y veggie',
+      'Viandas, ensaladas y opciones vegetarianas',
       'Pedidos por WhatsApp',
       'Opción vegetariana disponible',
     ],
@@ -571,7 +627,7 @@ const opportunities = <OpportunityItem>[
     title: 'Cool Kitchen Catering',
     subtitle: 'Catering y viandas para empresas',
     description:
-        'Catering social y corporativo con servicio de viandas publicado. Buena opción para pedidos grupales durante el Encuentro.',
+        'Servicio de catering social y corporativo con viandas para pedidos grupales durante el Encuentro.',
     category: OpportunityCategory.viandas,
     tags: [OpportunityTag.group, OpportunityTag.practical],
     highlights: [
@@ -592,13 +648,13 @@ const opportunities = <OpportunityItem>[
     title: 'Lo de Pauli · Gluten Free',
     subtitle: 'Viandas caseras sin gluten',
     description:
-        'Viandas caseras y nutritivas, de lunes a viernes al mediodía, por pedido. Precio publicado: \$7.500.',
+        'Viandas caseras sin gluten, disponibles de lunes a viernes al mediodía y únicamente por pedido. Consultá el precio actualizado y las condiciones de elaboración.',
     category: OpportunityCategory.viandas,
     tags: [OpportunityTag.practical, OpportunityTag.direct],
     highlights: [
-      'Viandas caseras y nutritivas sin gluten',
-      'De lunes a viernes al mediodía',
-      'Apta para celíacos',
+      'Viandas caseras sin gluten',
+      'Pedidos de lunes a viernes al mediodía',
+      'Consultá por ingredientes, manipulación y posibles trazas',
     ],
     actions: [
       ContactAction(
@@ -611,20 +667,20 @@ const opportunities = <OpportunityItem>[
   OpportunityItem(
     id: 'espacio-saludable',
     title: 'Espacio Saludable Concordia',
-    subtitle: 'Viandas personalizadas por nutricionistas',
+    subtitle: 'Viandas y planes semanales',
     description:
-        'Sobre Carriego 33. Viandas personalizadas elaboradas por nutricionistas y chefs. Opciones saludables.',
+        'Ubicado en Carriego 33. Ofrece viandas y planes semanales con opciones equilibradas para almuerzos y cenas.',
     category: OpportunityCategory.viandas,
     tags: [OpportunityTag.practical, OpportunityTag.direct],
     highlights: [
-      'Viandas personalizadas por nutricionistas',
+      'Viandas y planes semanales',
       'Opciones saludables',
-      'Contacto por perfil comercial',
+      'Consultá menús, modalidades y precios por WhatsApp',
     ],
     actions: [
       ContactAction(
         label: 'WhatsApp',
-        url: 'https://wa.me/5493454282644',
+        url: 'https://wa.me/5493454268915',
         icon: 'whatsapp',
       ),
     ],
@@ -634,7 +690,7 @@ const opportunities = <OpportunityItem>[
     title: 'Bar Ideal',
     subtitle: 'Un clásico gastronómico de Concordia',
     description:
-        'Sobre 1º de Mayo 51, esquina Urquiza, frente a Plaza 25 de Mayo. Bar y restaurante tradicional con pizzas, empanadas y comidas. Delivery publicado.',
+        'Ubicado en 1.º de Mayo 51, esquina Urquiza, frente a la Plaza 25 de Mayo. Bar y restaurante tradicional con pizzas, empanadas y otros platos, con servicio de entrega.',
     category: OpportunityCategory.gastronomy,
     latitude: -31.3978458,
     longitude: -58.0177876,
@@ -642,7 +698,7 @@ const opportunities = <OpportunityItem>[
     tags: [OpportunityTag.classic, OpportunityTag.highlighted],
     highlights: [
       'Pizzas, empanadas y platos tradicionales',
-      'Delivery y precios especiales para grupos',
+      'Servicio de entrega y consultas para grupos',
       'Ubicación frente a Plaza 25 de Mayo',
     ],
     actions: [
@@ -651,9 +707,9 @@ const opportunities = <OpportunityItem>[
         url: 'https://wa.me/5493454091184',
         icon: 'whatsapp',
       ),
-      ContactAction(label: 'Fijo', url: 'tel:03454212668', icon: 'web'),
+      ContactAction(label: 'Llamar', url: 'tel:03454212668', icon: 'web'),
       ContactAction(
-        label: 'Ficha',
+        label: 'Más información',
         url: 'https://ahgconcordia.com.ar/asociado/bar-ideal/',
         icon: 'web',
       ),
@@ -664,12 +720,12 @@ const opportunities = <OpportunityItem>[
     title: 'Pizzería El Reloj del Centro',
     subtitle: 'Pizza y platos de pizzería en el centro',
     description:
-        'Sobre Carlos Pellegrini 580. Pizzas, empanadas, sándwiches y platos de pizzería. Atención de lunes a domingo, 19:00 a 00:30.',
+        'Ubicada en Carlos Pellegrini 580. Ofrece pizzas, empanadas, sándwiches y otros platos. Horario informado: de lunes a domingo, de 19:00 a 00:30.',
     category: OpportunityCategory.gastronomy,
     tags: [OpportunityTag.classic, OpportunityTag.direct],
     highlights: [
       'Pizzas, empanadas y sándwiches',
-      'Abierto lunes a domingo de 19 a 00:30',
+      'Horario informado: todos los días, de 19:00 a 00:30',
       'Pedidos por WhatsApp',
     ],
     actions: [
@@ -678,15 +734,15 @@ const opportunities = <OpportunityItem>[
         url: 'https://wa.me/5493454154991',
         icon: 'whatsapp',
       ),
-      ContactAction(label: 'Fijo', url: 'tel:03454222822', icon: 'web'),
+      ContactAction(label: 'Llamar', url: 'tel:03454222822', icon: 'web'),
     ],
   ),
   OpportunityItem(
     id: 'parrilla-el-gordo',
     title: 'Parrilla El Gordo',
-    subtitle: 'Parrilla accesible para una comida abundante',
+    subtitle: 'Parrilla de ambiente sencillo y porciones abundantes',
     description:
-        'Sobre 1º de Mayo 194. Parrilla, pastas y minutas. Buena opción si buscás una comida abundante en un ambiente sencillo.',
+        'Ubicada en 1.º de Mayo 194. Ofrece parrilla, pastas y minutas en un ambiente sencillo.',
     category: OpportunityCategory.gastronomy,
     latitude: -31.3982169,
     longitude: -58.0149046,
@@ -694,8 +750,8 @@ const opportunities = <OpportunityItem>[
     tags: [OpportunityTag.classic, OpportunityTag.direct],
     highlights: [
       'Consultas por WhatsApp',
-      'Propuesta sencilla para almorzar o cenar',
-      'Compatible con un presupuesto moderado',
+      'Propuesta para almorzar o cenar',
+      'Consultá precios y disponibilidad antes de ir',
     ],
     actions: [
       ContactAction(
@@ -704,7 +760,7 @@ const opportunities = <OpportunityItem>[
         icon: 'whatsapp',
       ),
       ContactAction(
-        label: 'Guía',
+        label: 'Guía oficial',
         url: 'https://www.concordia.gob.ar/node/4394',
         icon: 'web',
       ),
@@ -715,190 +771,211 @@ const opportunities = <OpportunityItem>[
     title: 'Richmond Street Food Bar',
     subtitle: 'Opción urbana en Mercado Plaza',
     description:
-        'Ideal para una salida informal, con una propuesta moderna dentro del circuito gastronómico.',
+        'Propuesta informal dentro de Mercado Plaza, en 1.º de Mayo 101. Abre todos los días desde las 11:00 hasta el cierre, según su ficha institucional.',
     category: OpportunityCategory.gastronomy,
     tags: [OpportunityTag.direct, OpportunityTag.paseo],
     highlights: [
-      'Consultas por WhatsApp',
-      'Ambiente casual',
-      'Buena ubicación para una salida breve',
+      'Contacto directo por WhatsApp',
+      'Ubicado en Mercado Plaza',
+      'Horario publicado: todos los días desde las 11:00',
     ],
     actions: [
       ContactAction(
         label: 'WhatsApp',
-        url: 'https://wa.me/5493454146822',
+        url: 'https://wa.me/5493454063587',
         icon: 'whatsapp',
       ),
       ContactAction(
-        label: 'Ficha',
+        label: 'Más información',
         url: 'https://ahgconcordia.com.ar/asociado/richmond-street-food-bar/',
         icon: 'web',
       ),
     ],
   ),
   OpportunityItem(
-    id: 'sede-profesorado',
-    title: 'Profesorado de Ciencias Sociales',
-    subtitle: 'Sede de apertura · H. Yrigoyen 1352',
-    description:
-        'Apertura del III Encuentro sobre Historia de Entre Ríos. Miércoles 13/08 a las 18:30 con cine-debate. Hipólito Yrigoyen 1352.',
-    category: OpportunityCategory.places,
-    latitude: -31.3848811,
-    longitude: -58.0129170,
-    mapAddress: 'Hipólito Yrigoyen 1352',
-    tags: [OpportunityTag.paseo, OpportunityTag.highlighted],
-    highlights: [
-      'Sede oficial del Encuentro',
-      'Cine-debate de apertura el 13/08',
-      'Edificio del Profesorado de Ciencias Sociales',
-    ],
-    actions: [
-      ContactAction(
-        label: 'Abrir mapa',
-        url:
-            'https://www.google.com/maps/search/?api=1&query=Hip%C3%B3lito+Yrigoyen+1352+Concordia',
-        icon: 'web',
-      ),
-    ],
-  ),
-  OpportunityItem(
-    id: 'sede-fcad',
-    title: 'FCAD · UNER',
-    subtitle: 'Sede de mesas · Av. Tavella 1424',
-    description:
-        'Mesas y exposiciones del III Encuentro. Viernes 14/08 desde las 8:00 en la Facultad de Ciencias de la Administración, UNER.',
-    category: OpportunityCategory.places,
-    latitude: -31.3817858,
-    longitude: -58.0229796,
-    mapAddress: 'Av. Monseñor Tavella 1424',
-    tags: [OpportunityTag.paseo, OpportunityTag.highlighted],
-    highlights: [
-      'Sede principal de mesas y exposiciones',
-      'Actividades desde las 8:00 el 14/08',
-      'Facultad de Ciencias de la Administración',
-    ],
-    actions: [
-      ContactAction(
-        label: 'Abrir mapa',
-        url:
-            'https://www.google.com/maps/search/?api=1&query=Av.+Monse%C3%B1or+Tavella+1424+Concordia',
-        icon: 'web',
-      ),
-    ],
-  ),
-  OpportunityItem(
     id: 'parque-san-carlos',
-    title: 'Parque San Carlos',
-    subtitle: 'Naturaleza e historia en un paseo emblemático',
+    title: 'Parque y Castillo San Carlos',
+    subtitle: 'Naturaleza, patrimonio y El Principito',
     description:
-        'Uno de los lugares más reconocidos de Concordia, con espacios verdes y referencias históricas.',
+        'Área natural protegida de 98 hectáreas, ubicada a pocos minutos del centro. Dentro del parque se encuentran las ruinas del Castillo San Carlos, vinculadas con la estadía de Antoine de Saint-Exupéry en Concordia.',
     category: OpportunityCategory.places,
     latitude: -31.3661114,
     longitude: -57.9985275,
-    mapAddress: 'Parque San Carlos',
-    tags: [OpportunityTag.paseo, OpportunityTag.highlighted],
+    mapAddress: 'Parque San Carlos, Concordia',
+    tags: [
+      OpportunityTag.paseo,
+      OpportunityTag.outdoors,
+      OpportunityTag.highlighted,
+    ],
     highlights: [
-      'Lugar representativo de la ciudad',
-      'Ideal para una tarde libre',
-      'Se puede combinar con la Costanera o una salida gastronómica',
+      'Área protegida con senderos, miradores y espacios verdes',
+      'Incluye el Castillo San Carlos y referencias a El Principito',
+      'Adecuado para una recorrida de media tarde',
     ],
     actions: [
       ContactAction(
-        label: 'Ver sitio',
+        label: 'Cómo llegar',
+        url:
+            'https://www.google.com/maps/search/?api=1&query=Parque+San+Carlos+Concordia+Entre+R%C3%ADos',
+        icon: 'web',
+      ),
+      ContactAction(
+        label: 'Guía oficial',
         url:
             'https://www.concordia.gob.ar/turismo/atractivos/parque-san-carlos',
         icon: 'web',
       ),
     ],
+    note:
+        'Es un paseo principalmente al aire libre. Revisá el pronóstico y consultá las condiciones de acceso al Castillo antes de ir.',
   ),
   OpportunityItem(
     id: 'costanera',
-    title: 'Costanera',
-    subtitle: 'Paseo al aire libre junto al río',
+    title: 'Costanera de Concordia',
+    subtitle: 'Paseo urbano junto al río Uruguay',
     description:
-        'Una opción fácil para caminar, descansar y aprovechar un rato libre durante el Encuentro.',
+        'Sector ribereño para caminar, descansar y recorrer espacios como el Parque Mitre. Incluye un circuito de movilidad sustentable señalizado de aproximadamente tres kilómetros.',
     category: OpportunityCategory.places,
     latitude: -31.4025007,
     longitude: -58.0051035,
     mapAddress: 'Costanera de Concordia',
-    tags: [OpportunityTag.paseo],
+    tags: [OpportunityTag.paseo, OpportunityTag.outdoors],
     highlights: [
-      'Acceso sencillo',
-      'Se puede combinar con comida o merienda',
-      'Ideal para una visita corta',
+      'Alternativa cercana para una visita breve',
+      'Circuito al aire libre para caminar o andar en bicicleta',
+      'Se puede combinar con gastronomía y otros puntos del centro',
     ],
     actions: [
       ContactAction(
-        label: 'Ver sitio',
+        label: 'Cómo llegar',
+        url:
+            'https://www.google.com/maps/search/?api=1&query=Costanera+de+Concordia+Entre+R%C3%ADos',
+        icon: 'web',
+      ),
+      ContactAction(
+        label: 'Guía oficial',
         url: 'https://www.concordia.gob.ar/turismo/atractivos/costanera',
         icon: 'web',
       ),
     ],
+    note:
+        'La experiencia depende del clima y del estado del paseo ribereño. Consultá avisos locales si hubo lluvias o crecidas.',
   ),
   OpportunityItem(
-    id: 'termas',
-    title: 'Termas',
-    subtitle: 'Una salida ideal para el invierno',
+    id: 'museo-arruabarrena',
+    title: 'Museo Regional Palacio Arruabarrena',
+    subtitle: 'Historia regional en un palacio de comienzos del siglo XX',
     description:
-        'Uno de los principales atractivos de Concordia, especialmente agradable durante agosto.',
+        'Museo municipal ubicado frente a la Plaza Urquiza, en un edificio construido entre 1916 y 1919. Sus salas reúnen objetos, fotografías y testimonios vinculados con la historia de Concordia y la región.',
     category: OpportunityCategory.places,
-    latitude: -31.2958618,
-    longitude: -58.0030047,
-    mapAddress: 'Termas de Concordia',
-    tags: [OpportunityTag.paseo, OpportunityTag.thermal],
+    latitude: -31.3914250,
+    longitude: -58.0174850,
+    mapAddress: 'Ramírez y Entre Ríos, Concordia',
+    tags: [
+      OpportunityTag.paseo,
+      OpportunityTag.culture,
+      OpportunityTag.highlighted,
+    ],
     highlights: [
-      'Buena opción para los días fríos',
-      'Requiere más tiempo que un paseo urbano',
-      'Experiencia turística característica de la ciudad',
+      'Propuesta especialmente vinculada con la historia local',
+      'Edificio patrimonial frente a la Plaza Urquiza',
+      'Opción céntrica y adecuada para una visita breve',
     ],
     actions: [
       ContactAction(
-        label: 'Ver sitio',
+        label: 'Cómo llegar',
+        url:
+            'https://www.google.com/maps/search/?api=1&query=Museo+Regional+Palacio+Arruabarrena+Concordia',
+        icon: 'web',
+      ),
+      ContactAction(
+        label: 'Guía oficial',
+        url:
+            'https://www.concordia.gob.ar/turismo/atractivos/museos/museo-arruabarrena',
+        icon: 'web',
+      ),
+    ],
+    note:
+        'Los horarios de museos pueden modificarse por actividades especiales o feriados. Confirmalos antes de organizar la visita.',
+  ),
+  OpportunityItem(
+    id: 'museo-salto-grande',
+    title: 'Museo y Centro Cultural Salto Grande',
+    subtitle: 'Historia, tecnología e integración binacional',
+    description:
+        'Espacio situado dentro del Complejo Hidroeléctrico Salto Grande, a unos 18 kilómetros del centro. Presenta la historia de la represa, su construcción y su importancia para Argentina y Uruguay.',
+    category: OpportunityCategory.places,
+    latitude: -31.2748667,
+    longitude: -57.9385917,
+    mapAddress: 'Complejo Hidroeléctrico Salto Grande, Ruta Nacional 015',
+    brandAsset: 'assets/branding/salto_grande.webp',
+    tags: [OpportunityTag.paseo, OpportunityTag.culture],
+    highlights: [
+      'Recorrido histórico y tecnológico sobre la represa',
+      'Aproximadamente 18 kilómetros desde el centro de Concordia',
+      'Requiere prever traslado y tiempo adicional',
+    ],
+    actions: [
+      ContactAction(
+        label: 'Cómo llegar',
+        url:
+            'https://www.google.com/maps/search/?api=1&query=Museo+y+Centro+Cultural+Salto+Grande+Concordia',
+        icon: 'web',
+      ),
+      ContactAction(
+        label: 'Sitio oficial',
+        url: 'https://delegacionargentinasg.org.ar/museo/',
+        icon: 'web',
+      ),
+      ContactAction(
+        label: 'Guía turística',
+        url:
+            'https://www.concordia.gob.ar/turismo/atractivos/museos/museo-salto-grande',
+        icon: 'web',
+      ),
+    ],
+    note:
+        'Verificá horarios, modalidad de ingreso y disponibilidad de visitas guiadas antes de trasladarte al complejo.',
+  ),
+  OpportunityItem(
+    id: 'termas-vertiente',
+    title: 'Vertiente de la Concordia',
+    subtitle: 'Complejo termal al norte de la ciudad',
+    description:
+        'Complejo termal ubicado en el acceso hacia Salto Grande. Es una alternativa apropiada para una jornada de descanso durante el invierno.',
+    category: OpportunityCategory.places,
+    latitude: -31.2955902,
+    longitude: -58.0041958,
+    mapAddress: 'Av. Monseñor Rösch y acceso a Salto Grande',
+    tags: [
+      OpportunityTag.paseo,
+      OpportunityTag.thermal,
+      OpportunityTag.outdoors,
+    ],
+    highlights: [
+      'Propuesta termal adecuada para los días fríos',
+      'Requiere más tiempo que un paseo urbano',
+      'Conviene consultar tarifas, servicios y piscinas habilitadas',
+    ],
+    actions: [
+      ContactAction(
+        label: 'Cómo llegar',
+        url:
+            'https://www.google.com/maps/search/?api=1&query=Vertiente+de+la+Concordia+Entre+R%C3%ADos',
+        icon: 'web',
+      ),
+      ContactAction(
+        label: 'Sitio web',
+        url: 'https://termasconcordia.com/',
+        icon: 'web',
+      ),
+      ContactAction(
+        label: 'Oferta termal oficial',
         url: 'https://www.concordia.gob.ar/turismo/atractivos/termas',
         icon: 'web',
       ),
     ],
-  ),
-  OpportunityItem(
-    id: 'concorpass',
-    title: 'ConcorPass',
-    subtitle: 'Beneficios y propuestas turísticas desde el celular',
-    description:
-        'Te permite consultar beneficios y descubrir opciones turísticas oficiales para tu estadía.',
-    category: OpportunityCategory.places,
-    tags: [OpportunityTag.paseo, OpportunityTag.practical],
-    highlights: [
-      'Herramienta oficial de turismo',
-      'Útil para encontrar propuestas durante tu visita',
-      'Pensada para consultar desde el celular',
-    ],
-    actions: [
-      ContactAction(
-        label: 'Ver sitio',
-        url: 'https://www.concordia.gob.ar/turismo/concorpass',
-        icon: 'web',
-      ),
-    ],
-  ),
-  OpportunityItem(
-    id: 'portal-turismo',
-    title: 'Portal de Turismo',
-    subtitle: 'Información oficial sobre paseos y servicios',
-    description:
-        'Una referencia rápida para buscar alojamientos, gastronomía, actividades y otros servicios turísticos.',
-    category: OpportunityCategory.places,
-    tags: [OpportunityTag.paseo, OpportunityTag.practical],
-    highlights: [
-      'Información turística oficial',
-      'Reúne recorridos y servicios',
-      'Útil para seguir explorando opciones',
-    ],
-    actions: [
-      ContactAction(
-        label: 'Ver sitio',
-        url: 'https://www.concordia.gob.ar/turismo',
-        icon: 'web',
-      ),
-    ],
+    note:
+        'La oferta, los horarios y las condiciones de funcionamiento pueden cambiar. Consultá directamente antes de viajar.',
   ),
 ];

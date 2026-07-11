@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import 'brand_asset.dart';
 import 'data.dart';
+import 'global_search.dart';
 import 'map_screen.dart';
 import 'models.dart';
 
@@ -17,7 +19,7 @@ class ConcordiaApp extends StatelessWidget {
     );
 
     return MaterialApp(
-      title: 'III Encuentro ER',
+      title: 'III Encuentro sobre Historia de Entre Ríos',
       debugShowCheckedModeBanner: false,
       builder: (context, child) {
         SystemChrome.setSystemUIOverlayStyle(
@@ -69,11 +71,7 @@ class MobileHomeScreen extends StatefulWidget {
 
 class _MobileHomeScreenState extends State<MobileHomeScreen> {
   int _currentIndex = 0;
-  String _query = '';
   final Set<String> _favorites = <String>{};
-  final TextEditingController _searchController = TextEditingController();
-  final FocusNode _searchFocusNode = FocusNode();
-  bool _isSearchExpanded = false;
   double _headerSearchProgress = 0;
 
   static const _tabs = [
@@ -84,16 +82,10 @@ class _MobileHomeScreenState extends State<MobileHomeScreen> {
     _TabSpec('Comer', Icons.restaurant_rounded),
   ];
 
-  @override
-  void dispose() {
-    _searchController.dispose();
-    _searchFocusNode.dispose();
-    super.dispose();
-  }
 
   @override
   Widget build(BuildContext context) {
-    final searchProgress = _isSearchExpanded ? 1.0 : _headerSearchProgress;
+    final searchProgress = _headerSearchProgress;
     final screen = switch (_currentIndex) {
       0 => _HomeTab(
         favoritesCount: _favorites.length,
@@ -102,7 +94,7 @@ class _MobileHomeScreenState extends State<MobileHomeScreen> {
       ),
       1 => _OpportunityListTab(
         title: 'Dónde dormir',
-        subtitle: 'Opciones para distintos presupuestos y formas de viaje.',
+        subtitle: 'Opciones de alojamiento para distintos presupuestos y tipos de viaje.',
         items: _filterItems(OpportunityCategory.lodging),
         favorites: _favorites,
         onFavoriteToggle: _toggleFavorite,
@@ -113,8 +105,10 @@ class _MobileHomeScreenState extends State<MobileHomeScreen> {
         onCopyMessage: _copyMessage,
       ),
       3 => _OpportunityListTab(
-        title: 'Paseos y lugares para conocer',
-        subtitle: 'Ideas para aprovechar tus ratos libres en Concordia.',
+        title: 'Paseos y atractivos',
+        subtitle: 'Lugares turísticos, culturales y recreativos para conocer Concordia.',
+        notice:
+            'Confirmá horarios, tarifas, accesibilidad y condiciones de ingreso antes de trasladarte.',
         items: _filterItems(OpportunityCategory.places),
         favorites: _favorites,
         onFavoriteToggle: _toggleFavorite,
@@ -132,12 +126,7 @@ class _MobileHomeScreenState extends State<MobileHomeScreen> {
       appBar: _MorphingTopBar(
         title: _tabs[_currentIndex].label,
         progress: searchProgress,
-        controller: _searchController,
-        focusNode: _searchFocusNode,
-        showSearchClose: _isSearchExpanded,
-        onExpandSearch: _expandSearch,
-        onCollapseSearch: _collapseSearch,
-        onSearchChanged: (value) => setState(() => _query = value),
+        onOpenSearch: _openGlobalSearch,
         onOpenMap: _currentIndex == 3 ? _openMap : null,
       ),
       body: SafeArea(
@@ -186,13 +175,8 @@ class _MobileHomeScreenState extends State<MobileHomeScreen> {
   }
 
   List<OpportunityItem> _filterItems(OpportunityCategory category) {
-    final base = opportunities.where((item) => item.category == category);
-    final query = normalizeSearchText(_query);
-    if (query.isEmpty) {
-      return base.toList(growable: false);
-    }
-    return base
-        .where((item) => item.searchableText.contains(query))
+    return opportunities
+        .where((item) => item.category == category)
         .toList(growable: false);
   }
 
@@ -218,36 +202,24 @@ class _MobileHomeScreenState extends State<MobileHomeScreen> {
     }
     setState(() {
       _currentIndex = index;
-      _query = '';
-      _isSearchExpanded = false;
       _headerSearchProgress = 0;
     });
-    _searchFocusNode.unfocus();
-    _searchController.clear();
   }
 
-  void _expandSearch() {
-    if (_isSearchExpanded) {
-      _searchFocusNode.requestFocus();
-      return;
-    }
-    setState(() => _isSearchExpanded = true);
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted) _searchFocusNode.requestFocus();
-    });
-  }
-
-  void _collapseSearch() {
-    _searchFocusNode.unfocus();
-    _searchController.clear();
-    setState(() {
-      _query = '';
-      _isSearchExpanded = false;
-    });
+  Future<void> _openGlobalSearch() async {
+    await Navigator.of(context).push<void>(
+      MaterialPageRoute<void>(
+        builder: (_) => GlobalSearchPage(
+          favorites: _favorites,
+          onFavoriteToggle: _toggleFavorite,
+          onOpenTab: _selectTab,
+          onCopyMessage: _copyMessage,
+        ),
+      ),
+    );
   }
 
   bool _handleScrollNotification(ScrollNotification notification) {
-    if (_isSearchExpanded) return false;
     if (notification.metrics.axis != Axis.vertical) return false;
 
     final progress = (notification.metrics.pixels / 60).clamp(0.0, 1.0);
@@ -280,27 +252,17 @@ class _MorphingTopBar extends StatelessWidget implements PreferredSizeWidget {
   const _MorphingTopBar({
     required this.title,
     required this.progress,
-    required this.controller,
-    required this.focusNode,
-    required this.showSearchClose,
-    required this.onExpandSearch,
-    required this.onCollapseSearch,
-    required this.onSearchChanged,
+    required this.onOpenSearch,
     this.onOpenMap,
   });
 
   final String title;
   final double progress;
-  final TextEditingController controller;
-  final FocusNode focusNode;
-  final bool showSearchClose;
-  final VoidCallback onExpandSearch;
-  final VoidCallback onCollapseSearch;
-  final ValueChanged<String> onSearchChanged;
+  final VoidCallback onOpenSearch;
   final VoidCallback? onOpenMap;
 
   @override
-  Size get preferredSize => const Size.fromHeight(78);
+  Size get preferredSize => const Size.fromHeight(100);
 
   @override
   Widget build(BuildContext context) {
@@ -308,17 +270,17 @@ class _MorphingTopBar extends StatelessWidget implements PreferredSizeWidget {
     final titleOpacity = (1 - normalizedProgress * 3).clamp(0.0, 1.0);
 
     return AppBar(
-      toolbarHeight: 78,
+      toolbarHeight: 100,
       titleSpacing: 0,
       title: SizedBox(
         width: double.infinity,
-        height: 78,
+        height: 100,
         child: Stack(
           children: [
             Positioned(
               left: 16,
-              right: 116,
-              top: 7,
+              right: onOpenMap == null ? 76 : 118,
+              top: 6,
               child: IgnorePointer(
                 ignoring: titleOpacity < 0.1,
                 child: Opacity(
@@ -336,17 +298,31 @@ class _MorphingTopBar extends StatelessWidget implements PreferredSizeWidget {
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           style: const TextStyle(
-                            fontSize: 24,
-                            fontWeight: FontWeight.w700,
+                            fontSize: 23,
+                            height: 1.05,
+                            fontWeight: FontWeight.w800,
                             color: Color(0xFF174D3C),
                           ),
                         ),
+                        const SizedBox(height: 3),
                         const Text(
-                          'III Encuentro · Concordia · agosto 2026',
-                          maxLines: 1,
+                          'III Encuentro sobre Historia de Entre Ríos',
+                          maxLines: 2,
                           overflow: TextOverflow.ellipsis,
                           style: TextStyle(
                             fontSize: 13,
+                            height: 1.08,
+                            fontWeight: FontWeight.w700,
+                            color: Color(0xFF415D50),
+                          ),
+                        ),
+                        const SizedBox(height: 2),
+                        const Text(
+                          'Concordia · 13 y 14 de agosto de 2026',
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            fontSize: 11.5,
                             color: Color(0xFF5F7269),
                           ),
                         ),
@@ -358,32 +334,24 @@ class _MorphingTopBar extends StatelessWidget implements PreferredSizeWidget {
             ),
             if (onOpenMap != null)
               Positioned(
-                top: 15,
+                top: 26,
                 right: 68,
                 child: Opacity(
                   opacity: titleOpacity,
-                  child: Transform.translate(
-                    offset: Offset(0, -8 * normalizedProgress),
-                    child: IconButton(
-                      tooltip: 'Ver lugares en el mapa',
-                      onPressed: onOpenMap,
-                      icon: const Icon(Icons.map_rounded),
-                    ),
+                  child: IconButton(
+                    tooltip: 'Ver lugares en el mapa',
+                    onPressed: onOpenMap,
+                    icon: const Icon(Icons.map_rounded),
                   ),
                 ),
               ),
             Positioned(
               left: 16,
               right: 16,
-              top: 15,
+              top: 26,
               child: _ExpandableSearchBar(
                 progress: normalizedProgress,
-                showClose: showSearchClose,
-                controller: controller,
-                focusNode: focusNode,
-                onExpand: onExpandSearch,
-                onCollapse: onCollapseSearch,
-                onChanged: onSearchChanged,
+                onOpen: onOpenSearch,
               ),
             ),
           ],
@@ -396,114 +364,99 @@ class _MorphingTopBar extends StatelessWidget implements PreferredSizeWidget {
 class _ExpandableSearchBar extends StatelessWidget {
   const _ExpandableSearchBar({
     required this.progress,
-    required this.showClose,
-    required this.controller,
-    required this.focusNode,
-    required this.onExpand,
-    required this.onCollapse,
-    required this.onChanged,
+    required this.onOpen,
   });
 
   final double progress;
-  final bool showClose;
-  final TextEditingController controller;
-  final FocusNode focusNode;
-  final VoidCallback onExpand;
-  final VoidCallback onCollapse;
-  final ValueChanged<String> onChanged;
+  final VoidCallback onOpen;
 
   @override
   Widget build(BuildContext context) {
     return LayoutBuilder(
       builder: (context, constraints) {
         final normalizedProgress = progress.clamp(0.0, 1.0);
-        final textOpacity = ((normalizedProgress - 0.25) / 0.75).clamp(
+        final textOpacity = ((normalizedProgress - 0.20) / 0.80).clamp(
           0.0,
           1.0,
         );
         final width = 48 + (constraints.maxWidth - 48) * normalizedProgress;
-        final interactive = normalizedProgress > 0.92;
 
         return Align(
           alignment: Alignment.centerRight,
-          child: AnimatedContainer(
-            duration: Duration(milliseconds: showClose ? 340 : 70),
-            curve: showClose ? Curves.easeOutCubic : Curves.linear,
-            width: width,
-            height: 48,
-            clipBehavior: Clip.antiAlias,
-            decoration: BoxDecoration(
-              color: Color.lerp(
-                const Color(0xFFE8F3EA),
-                Colors.white,
-                normalizedProgress,
-              ),
-              borderRadius: BorderRadius.circular(24),
-              border: Border.all(color: const Color(0xFFC9D8D0)),
-              boxShadow: [
-                BoxShadow(
-                  color: Color.fromRGBO(0, 0, 0, 0.08 * normalizedProgress),
-                  blurRadius: 10 * normalizedProgress,
-                  offset: Offset(0, 3 * normalizedProgress),
-                ),
-              ],
-            ),
-            child: Stack(
-              children: [
-                Positioned.fill(
-                  child: IgnorePointer(
-                    ignoring: !interactive,
-                    child: Opacity(
-                      opacity: textOpacity,
-                      child: Padding(
-                        padding: const EdgeInsets.only(left: 44, right: 42),
-                        child: TextField(
-                          controller: controller,
-                          focusNode: focusNode,
-                          onChanged: onChanged,
-                          textInputAction: TextInputAction.search,
-                          style: const TextStyle(
-                            color: Color(0xFF203129),
-                            fontSize: 15,
-                          ),
-                          decoration: const InputDecoration(
-                            hintText: 'Buscar alojamiento, comida o paseo',
-                            hintStyle: TextStyle(color: Color(0xFF5F7269)),
-                            border: InputBorder.none,
-                            enabledBorder: InputBorder.none,
-                            focusedBorder: InputBorder.none,
-                            contentPadding: EdgeInsets.symmetric(vertical: 13),
-                          ),
+          child: Semantics(
+            button: true,
+            label: 'Abrir búsqueda global',
+            child: Material(
+              color: Colors.transparent,
+              child: InkWell(
+                onTap: onOpen,
+                borderRadius: BorderRadius.circular(24),
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 90),
+                  curve: Curves.easeOut,
+                  width: width,
+                  height: 48,
+                  decoration: BoxDecoration(
+                    color: Color.lerp(
+                      const Color(0xFFE8F3EA),
+                      Colors.white,
+                      normalizedProgress,
+                    ),
+                    borderRadius: BorderRadius.circular(24),
+                    border: Border.all(color: const Color(0xFFC9D8D0)),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Color.fromRGBO(
+                          0,
+                          0,
+                          0,
+                          0.08 * normalizedProgress,
+                        ),
+                        blurRadius: 10 * normalizedProgress,
+                        offset: Offset(0, 3 * normalizedProgress),
+                      ),
+                    ],
+                  ),
+                  child: Row(
+                    children: [
+                      const SizedBox(
+                        width: 46,
+                        child: Icon(
+                          Icons.search_rounded,
+                          color: Color(0xFF174D3C),
                         ),
                       ),
-                    ),
+                      if (normalizedProgress > 0.15)
+                        Expanded(
+                          child: Opacity(
+                            opacity: textOpacity,
+                            child: const Text(
+                              'Buscar sedes, mapa, alojamiento, comida o paseos',
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                color: Color(0xFF5F7269),
+                                fontSize: 14,
+                              ),
+                            ),
+                          ),
+                        ),
+                      if (normalizedProgress > 0.50)
+                        Opacity(
+                          opacity: textOpacity,
+                          child: const Padding(
+                            padding: EdgeInsets.only(right: 14),
+                            child: Icon(
+                              Icons.arrow_forward_rounded,
+                              size: 18,
+                              color: Color(0xFF5F7269),
+                            ),
+                          ),
+                        ),
+                    ],
                   ),
                 ),
-                Align(
-                  alignment: Alignment.centerLeft,
-                  child: IconButton(
-                    tooltip: interactive ? 'Buscar' : 'Abrir búsqueda',
-                    onPressed: onExpand,
-                    icon: const Icon(
-                      Icons.search_rounded,
-                      color: Color(0xFF174D3C),
-                    ),
-                  ),
-                ),
-                if (showClose)
-                  Align(
-                    alignment: Alignment.centerRight,
-                    child: IconButton(
-                      tooltip: 'Cerrar búsqueda',
-                      onPressed: onCollapse,
-                      icon: const Icon(
-                        Icons.close_rounded,
-                        color: Color(0xFF5F7269),
-                        size: 20,
-                      ),
-                    ),
-                  ),
-              ],
+              ),
             ),
           ),
         );
@@ -555,7 +508,7 @@ class _HomeTab extends StatelessWidget {
               const SizedBox(height: 10),
               const Text(
                 'Guía práctica para quienes asisten al III Encuentro sobre '
-                'Historia de Entre Ríos: dónde dormir, qué comer y qué hacer en los ratos libres.',
+                'Historia de Entre Ríos: sedes, alojamiento, comidas y lugares para conocer Concordia.',
                 style: TextStyle(fontSize: 15, color: Color(0xFF203129)),
               ),
               const SizedBox(height: 16),
@@ -579,6 +532,8 @@ class _HomeTab extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 18),
+        const _EncounterInformationCard(),
+        const SizedBox(height: 18),
         _HighlightsGrid(),
         const SizedBox(height: 18),
         Card(
@@ -589,7 +544,7 @@ class _HomeTab extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 const Text(
-                  'Para organizar tu estadía',
+                  'Para planificar tu estadía',
                   style: TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.w700,
@@ -607,7 +562,7 @@ class _HomeTab extends StatelessWidget {
                           padding: EdgeInsets.only(top: 2),
                           child: Icon(
                             Icons.check_circle_rounded,
-                size: 16,
+                            size: 16,
                             color: Color(0xFF2F7455),
                           ),
                         ),
@@ -622,16 +577,413 @@ class _HomeTab extends StatelessWidget {
                       ],
                     ),
                   ),
+                const SizedBox(height: 2),
+                const Text(
+                  'La información es orientativa. Confirmá tarifas, horarios, disponibilidad, accesibilidad y condiciones directamente con cada establecimiento.',
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: Color(0xFF5F7269),
+                  ),
+                ),
               ],
             ),
           ),
         ),
+        const SizedBox(height: 18),
+        const _UsefulInformationCard(),
         const SizedBox(height: 18),
         _QuickAccessGrid(
           favoritesCount: favoritesCount,
           onOpenCategory: onOpenCategory,
         ),
       ],
+    );
+  }
+}
+
+
+class _EncounterInformationCard extends StatelessWidget {
+  const _EncounterInformationCard();
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      color: const Color(0xFFEFF6EE),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Row(
+              children: [
+                Icon(Icons.event_rounded, color: Color(0xFF174D3C)),
+                SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    'Sedes del Encuentro',
+                    style: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.w800,
+                      color: Color(0xFF174D3C),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 6),
+            const Text(
+              'Las actividades se realizan en dos edificios distintos.',
+              style: TextStyle(color: Color(0xFF5F7269), fontSize: 13),
+            ),
+            const SizedBox(height: 14),
+            _venue(
+              icon: Icons.movie_outlined,
+              assetPath: 'assets/branding/pscs_institucional.webp',
+              title: 'Jueves 13 · 18:30',
+              place: 'Profesorado Superior de Ciencias Sociales',
+              address: 'Hipólito Yrigoyen 1352 · Apertura y cine debate',
+              mapsUrl:
+                  'https://www.google.com/maps/search/?api=1&query=Hip%C3%B3lito+Yrigoyen+1352+Concordia',
+            ),
+            const Divider(height: 24),
+            _venue(
+              icon: Icons.groups_2_outlined,
+              assetPath: 'assets/branding/fcad_uner.png',
+              logoBackgroundColor: Colors.white,
+              title: 'Viernes 14 · desde las 8:00',
+              place: 'Facultad de Ciencias de la Administración · UNER',
+              address: 'Av. Monseñor Tavella 1424 · Mesas y exposiciones',
+              mapsUrl:
+                  'https://www.google.com/maps/search/?api=1&query=Av.+Monse%C3%B1or+Tavella+1424+Concordia',
+            ),
+            const SizedBox(height: 14),
+            const _EncounterActionGroup(),
+          ],
+        ),
+      ),
+    );
+  }
+
+  static Widget _venue({
+    required IconData icon,
+    required String assetPath,
+    Color logoBackgroundColor = Colors.white,
+    required String title,
+    required String place,
+    required String address,
+    required String mapsUrl,
+  }) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        BrandAssetBox(
+          assetPath: assetPath,
+          fallbackIcon: icon,
+          size: 46,
+          borderRadius: 10,
+          backgroundColor: logoBackgroundColor,
+          padding: assetPath.endsWith('fcad_uner.png')
+              ? const EdgeInsets.all(2)
+              : assetPath.endsWith('pscs_institucional.webp')
+                  ? const EdgeInsets.all(2)
+                  : const EdgeInsets.all(6),
+          fit: BoxFit.contain,
+        ),
+        const SizedBox(width: 11),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                title,
+                style: const TextStyle(
+                  fontWeight: FontWeight.w800,
+                  color: Color(0xFF174D3C),
+                ),
+              ),
+              const SizedBox(height: 2),
+              Text(place, style: const TextStyle(fontWeight: FontWeight.w700)),
+              const SizedBox(height: 2),
+              Text(
+                address,
+                style: const TextStyle(fontSize: 12, color: Color(0xFF5F7269)),
+              ),
+              const SizedBox(height: 6),
+              _ActionButton(
+                action: ContactAction(
+                  label: 'Cómo llegar',
+                  url: mapsUrl,
+                  icon: 'web',
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _EncounterActionGroup extends StatelessWidget {
+  const _EncounterActionGroup();
+
+  @override
+  Widget build(BuildContext context) {
+    final consultAction = encounterActions.first;
+    final officialAction = encounterActions.last;
+
+    return Container(
+      clipBehavior: Clip.antiAlias,
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: const Color(0xFFBFD2C8)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Padding(
+            padding: EdgeInsets.fromLTRB(14, 13, 14, 11),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Contacto e información',
+                  style: TextStyle(
+                    color: Color(0xFF174D3C),
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+                SizedBox(height: 3),
+                Text(
+                  'Comunicate con la organización o revisá la publicación institucional.',
+                  style: TextStyle(
+                    color: Color(0xFF5F7269),
+                    fontSize: 12,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const Divider(height: 1),
+          LayoutBuilder(
+            builder: (context, constraints) {
+              final horizontal = constraints.maxWidth >= 330;
+              final consult = _EncounterActionCell(
+                action: consultAction,
+                title: 'Consultar',
+                subtitle: 'Enviar un correo',
+                icon: Icons.mail_outline_rounded,
+                emphasized: true,
+              );
+              final official = _EncounterActionCell(
+                action: officialAction,
+                title: 'Sitio oficial',
+                subtitle: 'Ver la publicación',
+                icon: Icons.open_in_new_rounded,
+              );
+
+              if (!horizontal) {
+                return Column(
+                  children: [
+                    consult,
+                    const Divider(height: 1),
+                    official,
+                  ],
+                );
+              }
+
+              return IntrinsicHeight(
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Expanded(child: consult),
+                    const VerticalDivider(width: 1),
+                    Expanded(child: official),
+                  ],
+                ),
+              );
+            },
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _EncounterActionCell extends StatelessWidget {
+  const _EncounterActionCell({
+    required this.action,
+    required this.title,
+    required this.subtitle,
+    required this.icon,
+    this.emphasized = false,
+  });
+
+  final ContactAction action;
+  final String title;
+  final String subtitle;
+  final IconData icon;
+  final bool emphasized;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: emphasized ? const Color(0xFFE2F0E7) : Colors.white,
+      child: InkWell(
+        onTap: () => _launchExternalUrl(context, action.url),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 12),
+          child: Row(
+            children: [
+              Container(
+                width: 36,
+                height: 36,
+                decoration: BoxDecoration(
+                  color: emphasized
+                      ? const Color(0xFF174D3C)
+                      : const Color(0xFFF0F4F1),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Icon(
+                  icon,
+                  size: 19,
+                  color: emphasized ? Colors.white : const Color(0xFF174D3C),
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      title,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        color: Color(0xFF174D3C),
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                    const SizedBox(height: 1),
+                    Text(
+                      subtitle,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        color: Color(0xFF5F7269),
+                        fontSize: 11,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 4),
+              const Icon(
+                Icons.chevron_right_rounded,
+                color: Color(0xFF5F7269),
+                size: 20,
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _UsefulInformationCard extends StatelessWidget {
+  const _UsefulInformationCard();
+
+  @override
+  Widget build(BuildContext context) {
+    final action = tourismActions.first;
+
+    return Card(
+      clipBehavior: Clip.antiAlias,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Padding(
+            padding: EdgeInsets.fromLTRB(16, 15, 16, 12),
+            child: Row(
+              children: [
+                Icon(Icons.info_rounded, color: Color(0xFF174D3C)),
+                SizedBox(width: 10),
+                Text(
+                  'Información útil',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w800,
+                    color: Color(0xFF174D3C),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const Divider(height: 1),
+          Material(
+            color: Colors.white,
+            child: InkWell(
+              onTap: () => _launchExternalUrl(context, action.url),
+              child: const Padding(
+                padding: EdgeInsets.fromLTRB(14, 13, 12, 14),
+                child: Row(
+                  children: [
+                    _InformationIcon(),
+                    SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Guía turística oficial',
+                            style: TextStyle(
+                              color: Color(0xFF174D3C),
+                              fontWeight: FontWeight.w800,
+                            ),
+                          ),
+                          SizedBox(height: 3),
+                          Text(
+                            'Atractivos, alojamiento, gastronomía y novedades de Concordia.',
+                            style: TextStyle(
+                              color: Color(0xFF5F7269),
+                              fontSize: 12,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    SizedBox(width: 8),
+                    Icon(
+                      Icons.open_in_new_rounded,
+                      color: Color(0xFF5F7269),
+                      size: 20,
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _InformationIcon extends StatelessWidget {
+  const _InformationIcon();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 42,
+      height: 42,
+      decoration: BoxDecoration(
+        color: const Color(0xFFEAF2ED),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: const Icon(Icons.travel_explore_rounded, color: Color(0xFF174D3C)),
     );
   }
 }
@@ -727,19 +1079,19 @@ class _QuickAccessGrid extends StatelessWidget {
     final quickCards = [
       (
         'Dormir',
-        'Opciones para viajar solo, en pareja o con colegas.',
+        'Alternativas para viajar solo, en pareja o con colegas.',
         Icons.bed_rounded,
         1,
       ),
       (
         'Comer',
-        'Viandas, rotiserías y lugares para sentarte a comer.',
+        'Viandas, rotiserías, bares y restaurantes.',
         Icons.restaurant_rounded,
         4,
       ),
       (
         'Paseos',
-        'Ideas para aprovechar los ratos libres en Concordia.',
+        'Ideas para aprovechar tu tiempo libre en Concordia.',
         Icons.map_rounded,
         3,
       ),
@@ -747,7 +1099,9 @@ class _QuickAccessGrid extends StatelessWidget {
         'Favoritos',
         favoritesCount == 0
             ? 'Todavía no guardaste ninguna opción.'
-            : '$favoritesCount opciones guardadas.',
+            : favoritesCount == 1
+                ? '1 opción guardada.'
+                : '$favoritesCount opciones guardadas.',
         Icons.bookmark_rounded,
         0,
       ),
@@ -817,6 +1171,7 @@ class _OpportunityListTab extends StatelessWidget {
     required this.favorites,
     required this.onFavoriteToggle,
     this.onOpenMap,
+    this.notice,
   });
 
   final String title;
@@ -825,6 +1180,7 @@ class _OpportunityListTab extends StatelessWidget {
   final Set<String> favorites;
   final ValueChanged<String> onFavoriteToggle;
   final VoidCallback? onOpenMap;
+  final String? notice;
 
   @override
   Widget build(BuildContext context) {
@@ -836,14 +1192,47 @@ class _OpportunityListTab extends StatelessWidget {
           subtitle,
           style: const TextStyle(fontSize: 15, color: Color(0xFF5F7269)),
         ),
-        const SizedBox(height: 16),
+        const SizedBox(height: 12),
+        if (notice != null) ...[
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: const Color(0xFFFFF8E7),
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(color: const Color(0xFFE8D9AF)),
+            ),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Icon(
+                  Icons.info_outline_rounded,
+                  size: 19,
+                  color: Color(0xFF7A6125),
+                ),
+                const SizedBox(width: 9),
+                Expanded(
+                  child: Text(
+                    notice!,
+                    style: const TextStyle(
+                      fontSize: 12,
+                      color: Color(0xFF5B4A22),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 16),
+        ] else
+          const SizedBox(height: 4),
         if (onOpenMap != null) ...[
           SizedBox(
             width: double.infinity,
             child: FilledButton.icon(
               onPressed: onOpenMap,
               icon: const Icon(Icons.map_rounded),
-              label: const Text('Ver mapa de lugares'),
+              label: const Text('Ver lugares en el mapa'),
             ),
           ),
           const SizedBox(height: 16),
@@ -889,7 +1278,7 @@ class _FoodTab extends StatelessWidget {
       padding: const EdgeInsets.fromLTRB(16, 12, 16, 90),
       children: [
         const Text(
-          'Encontrá viandas para comer entre actividades y lugares para disfrutar una salida en Concordia.',
+          'Encontrá viandas para comer entre actividades y lugares para almorzar, cenar o disfrutar una salida en Concordia.',
           style: TextStyle(fontSize: 15, color: Color(0xFF5F7269)),
         ),
         const SizedBox(height: 18),
@@ -901,8 +1290,8 @@ class _FoodTab extends StatelessWidget {
         else ...[
           if (viandas.isNotEmpty) ...[
             const _SectionHeading(
-              title: 'Viandas y comida rápida',
-              subtitle: 'Opciones prácticas para los días del Encuentro.',
+              title: 'Viandas y comida para llevar',
+              subtitle: 'Opciones prácticas para las jornadas del Encuentro.',
             ),
             const SizedBox(height: 10),
             ...viandas.map(
@@ -919,8 +1308,8 @@ class _FoodTab extends StatelessWidget {
           if (gastronomy.isNotEmpty) ...[
             const SizedBox(height: 8),
             const _SectionHeading(
-              title: 'Restaurantes y sabores locales',
-              subtitle: 'Para almorzar, cenar o aprovechar una salida.',
+              title: 'Restaurantes, bares y pizzerías',
+              subtitle: 'Para almorzar, cenar o hacer una salida.',
             ),
             const SizedBox(height: 10),
             ...gastronomy.map(
@@ -966,6 +1355,14 @@ class OpportunityCard extends StatelessWidget {
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                if (item.brandAsset != null) ...[
+                  BrandAssetBox(
+                    assetPath: item.brandAsset!,
+                    fallbackIcon: Icons.account_balance_rounded,
+                    size: 52,
+                  ),
+                  const SizedBox(width: 12),
+                ],
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -1078,7 +1475,7 @@ class OpportunityCard extends StatelessWidget {
 
   Widget _tagChip(OpportunityTag tag) {
     final data = switch (tag) {
-      OpportunityTag.group => ('Para varias personas', const Color(0xFFDDEFE4)),
+      OpportunityTag.group => ('Para grupos', const Color(0xFFDDEFE4)),
       OpportunityTag.budget => ('Económico', const Color(0xFFF5ECD3)),
       OpportunityTag.direct => ('Contacto directo', const Color(0xFFE6EEF7)),
       OpportunityTag.classic => ('Clásico', const Color(0xFFF3E2E2)),
@@ -1086,6 +1483,8 @@ class OpportunityCard extends StatelessWidget {
       OpportunityTag.practical => ('Práctico', const Color(0xFFE9F4E6)),
       OpportunityTag.paseo => ('Para visitar', const Color(0xFFE7EFFA)),
       OpportunityTag.highlighted => ('Recomendado', const Color(0xFFE4F5EB)),
+      OpportunityTag.culture => ('Cultural', const Color(0xFFF1E7F7)),
+      OpportunityTag.outdoors => ('Al aire libre', const Color(0xFFE3F2E9)),
     };
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
@@ -1122,43 +1521,47 @@ class _ActionButton extends StatelessWidget {
 
     return isPrimary
         ? FilledButton.icon(
-            onPressed: () => _open(context, action.url),
+            onPressed: () => _launchExternalUrl(context, action.url),
             icon: Icon(iconData),
             label: Text(action.label),
           )
         : OutlinedButton.icon(
-            onPressed: () => _open(context, action.url),
+            onPressed: () => _launchExternalUrl(context, action.url),
             icon: Icon(iconData),
             label: Text(action.label),
           );
   }
+}
 
-  Future<void> _open(BuildContext context, String rawUrl) async {
-    final uri = Uri.tryParse(rawUrl);
-    if (uri == null ||
-        !const {'http', 'https', 'mailto', 'tel'}.contains(uri.scheme)) {
-      _showLaunchError(context, rawUrl);
-      return;
-    }
-
-    bool launched = false;
-    try {
-      launched = await launchUrl(uri, mode: LaunchMode.externalApplication);
-    } on PlatformException {
-      launched = false;
-    } on FormatException {
-      launched = false;
-    }
-    if (!context.mounted || launched) return;
-    _showLaunchError(context, rawUrl);
+Future<void> _launchExternalUrl(BuildContext context, String rawUrl) async {
+  final uri = Uri.tryParse(rawUrl);
+  if (uri == null ||
+      !const {'http', 'https', 'mailto', 'tel'}.contains(uri.scheme)) {
+    _showExternalLaunchError(context);
+    return;
   }
 
-  void _showLaunchError(BuildContext context, String rawUrl) {
-    if (!context.mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('No pudimos abrir este enlace: $rawUrl')),
-    );
+  bool launched = false;
+  try {
+    launched = await launchUrl(uri, mode: LaunchMode.externalApplication);
+  } on PlatformException {
+    launched = false;
+  } on FormatException {
+    launched = false;
   }
+  if (!context.mounted || launched) return;
+  _showExternalLaunchError(context);
+}
+
+void _showExternalLaunchError(BuildContext context) {
+  if (!context.mounted) return;
+  ScaffoldMessenger.of(context).showSnackBar(
+    const SnackBar(
+      content: Text(
+        'No pudimos abrir el enlace. Verificá que tengas una aplicación compatible.',
+      ),
+    ),
+  );
 }
 
 class _SectionHeading extends StatelessWidget {
