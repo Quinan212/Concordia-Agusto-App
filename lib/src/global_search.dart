@@ -630,7 +630,7 @@ class _GlobalSearchPageState extends State<GlobalSearchPage> {
 
   String _tagAliases(OpportunityTag tag) {
     return switch (tag) {
-      OpportunityTag.group => 'grupo grupos compartir colegas varias personas',
+      OpportunityTag.group => 'grupo grupos compartir grupo varias personas',
       OpportunityTag.budget => 'economico economica barato barata presupuesto bajo costo',
       OpportunityTag.direct => 'contacto directo whatsapp telefono correo',
       OpportunityTag.classic => 'clasico tradicional historico',

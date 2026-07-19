@@ -82,7 +82,6 @@ class _MobileHomeScreenState extends State<MobileHomeScreen> {
     _TabSpec('Comer', Icons.restaurant_rounded),
   ];
 
-
   @override
   Widget build(BuildContext context) {
     final searchProgress = _headerSearchProgress;
@@ -94,7 +93,8 @@ class _MobileHomeScreenState extends State<MobileHomeScreen> {
       ),
       1 => _OpportunityListTab(
         title: 'Dónde dormir',
-        subtitle: 'Opciones de alojamiento para distintos presupuestos y tipos de viaje.',
+        subtitle:
+            'Opciones de alojamiento para distintos presupuestos y tipos de viaje.',
         items: _filterItems(OpportunityCategory.lodging),
         favorites: _favorites,
         onFavoriteToggle: _toggleFavorite,
@@ -106,7 +106,8 @@ class _MobileHomeScreenState extends State<MobileHomeScreen> {
       ),
       3 => _OpportunityListTab(
         title: 'Paseos y atractivos',
-        subtitle: 'Lugares turísticos, culturales y recreativos para conocer Concordia.',
+        subtitle:
+            'Lugares turísticos, culturales y recreativos para conocer Concordia.',
         notice:
             'Confirmá horarios, tarifas, accesibilidad y condiciones de ingreso antes de trasladarte.',
         items: _filterItems(OpportunityCategory.places),
@@ -123,6 +124,7 @@ class _MobileHomeScreenState extends State<MobileHomeScreen> {
     };
 
     return Scaffold(
+      extendBodyBehindAppBar: true,
       appBar: _MorphingTopBar(
         title: _tabs[_currentIndex].label,
         progress: searchProgress,
@@ -131,43 +133,85 @@ class _MobileHomeScreenState extends State<MobileHomeScreen> {
       ),
       body: SafeArea(
         top: false,
-        child: NotificationListener<ScrollNotification>(
-          onNotification: _handleScrollNotification,
-          child: AnimatedSwitcher(
-            duration: const Duration(milliseconds: 250),
-            child: screen,
+        child: AnimatedPadding(
+          duration: const Duration(milliseconds: 90),
+          curve: Curves.easeOut,
+          padding: EdgeInsets.only(top: 120 * (1 - searchProgress)),
+          child: NotificationListener<ScrollNotification>(
+            onNotification: _handleScrollNotification,
+            child: AnimatedSwitcher(
+              duration: const Duration(milliseconds: 250),
+              child: screen,
+            ),
           ),
         ),
       ),
       bottomNavigationBar: MediaQuery.withNoTextScaling(
-        child: Container(
-          height: 51,
-          clipBehavior: Clip.none,
-          decoration: const BoxDecoration(
-            color: Colors.white,
-            border: Border(
-              top: BorderSide(color: Color(0xFFC9D8D0)),
-            ),
-          ),
-          child: Row(
-            children: [
-              for (int i = 0; i < _tabs.length; i++)
-                Expanded(
-                  child: i == 2
-                      ? _CenterNavItem(
-                          icon: _tabs[i].icon,
-                          label: _tabs[i].label,
-                          isSelected: _currentIndex == i,
-                          onTap: () => _selectTab(i),
-                        )
-                      : _NavItem(
-                          icon: _tabs[i].icon,
-                          label: _tabs[i].label,
-                          isSelected: _currentIndex == i,
-                          onTap: () => _selectTab(i),
-                        ),
+        child: SafeArea(
+          top: false,
+          child: Container(
+            height: 60,
+            clipBehavior: Clip.none,
+            decoration: const BoxDecoration(
+              color: Colors.white,
+              border: Border(top: BorderSide(color: Color(0xFFC9D8D0))),
+              boxShadow: [
+                BoxShadow(
+                  color: Color(0x14000000),
+                  blurRadius: 8,
+                  offset: Offset(0, -2),
                 ),
-            ],
+              ],
+            ),
+            child: LayoutBuilder(
+              builder: (context, constraints) {
+                const indicatorWidth = 36.0;
+                final itemWidth = constraints.maxWidth / _tabs.length;
+                final indicatorLeft =
+                    (itemWidth * _currentIndex) +
+                    ((itemWidth - indicatorWidth) / 2);
+
+                return Stack(
+                  clipBehavior: Clip.none,
+                  children: [
+                    Row(
+                      children: [
+                        for (int i = 0; i < _tabs.length; i++)
+                          Expanded(
+                            child: i == 2
+                                ? _CenterNavItem(
+                                    icon: _tabs[i].icon,
+                                    label: _tabs[i].label,
+                                    isSelected: _currentIndex == i,
+                                    onTap: () => _selectTab(i),
+                                  )
+                                : _NavItem(
+                                    icon: _tabs[i].icon,
+                                    label: _tabs[i].label,
+                                    isSelected: _currentIndex == i,
+                                    onTap: () => _selectTab(i),
+                                  ),
+                          ),
+                      ],
+                    ),
+                    AnimatedPositioned(
+                      duration: const Duration(milliseconds: 250),
+                      curve: Curves.easeOutCubic,
+                      top: 0,
+                      left: indicatorLeft,
+                      child: Container(
+                        width: indicatorWidth,
+                        height: 4,
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF174D3C),
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                      ),
+                    ),
+                  ],
+                );
+              },
+            ),
           ),
         ),
       ),
@@ -272,11 +316,47 @@ class _MorphingTopBar extends StatelessWidget implements PreferredSizeWidget {
     return AppBar(
       toolbarHeight: 100,
       titleSpacing: 0,
+      backgroundColor: Colors.transparent,
+      surfaceTintColor: Colors.transparent,
+      elevation: 0,
+      scrolledUnderElevation: 0,
+      shadowColor: Colors.transparent,
+      systemOverlayStyle: SystemUiOverlayStyle.dark.copyWith(
+        statusBarColor: const Color(0xFFE2F0E7),
+        statusBarIconBrightness: Brightness.dark,
+        statusBarBrightness: Brightness.light,
+      ),
+      flexibleSpace: Align(
+        alignment: Alignment.topCenter,
+        child: Container(
+          height: MediaQuery.paddingOf(context).top,
+          color: const Color(0xFFE2F0E7),
+        ),
+      ),
       title: SizedBox(
         width: double.infinity,
         height: 100,
         child: Stack(
           children: [
+            Positioned(
+              top: 0,
+              left: 0,
+              right: 0,
+              child: IgnorePointer(
+                child: Opacity(
+                  opacity: normalizedProgress,
+                  child: Container(
+                    height: 68,
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFE2F0E7),
+                      borderRadius: const BorderRadius.vertical(
+                        bottom: Radius.circular(18),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
             Positioned(
               left: 16,
               right: onOpenMap == null ? 76 : 118,
@@ -348,7 +428,7 @@ class _MorphingTopBar extends StatelessWidget implements PreferredSizeWidget {
             Positioned(
               left: 16,
               right: 16,
-              top: 26,
+              top: 8,
               child: _ExpandableSearchBar(
                 progress: normalizedProgress,
                 onOpen: onOpenSearch,
@@ -362,10 +442,7 @@ class _MorphingTopBar extends StatelessWidget implements PreferredSizeWidget {
 }
 
 class _ExpandableSearchBar extends StatelessWidget {
-  const _ExpandableSearchBar({
-    required this.progress,
-    required this.onOpen,
-  });
+  const _ExpandableSearchBar({required this.progress, required this.onOpen});
 
   final double progress;
   final VoidCallback onOpen;
@@ -396,6 +473,7 @@ class _ExpandableSearchBar extends StatelessWidget {
                   curve: Curves.easeOut,
                   width: width,
                   height: 48,
+                  clipBehavior: Clip.hardEdge,
                   decoration: BoxDecoration(
                     color: Color.lerp(
                       const Color(0xFFE8F3EA),
@@ -417,43 +495,51 @@ class _ExpandableSearchBar extends StatelessWidget {
                       ),
                     ],
                   ),
-                  child: Row(
-                    children: [
-                      const SizedBox(
-                        width: 46,
-                        child: Icon(
-                          Icons.search_rounded,
-                          color: Color(0xFF174D3C),
-                        ),
-                      ),
-                      if (normalizedProgress > 0.15)
-                        Expanded(
-                          child: Opacity(
-                            opacity: textOpacity,
-                            child: const Text(
-                              'Buscar sedes, mapa, alojamiento, comida o paseos',
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: TextStyle(
-                                color: Color(0xFF5F7269),
-                                fontSize: 14,
+                  child: OverflowBox(
+                    alignment: Alignment.centerLeft,
+                    minWidth: 0,
+                    maxWidth: constraints.maxWidth,
+                    child: SizedBox(
+                      width: constraints.maxWidth,
+                      child: Row(
+                        children: [
+                          const SizedBox(
+                            width: 46,
+                            child: Icon(
+                              Icons.search_rounded,
+                              color: Color(0xFF174D3C),
+                            ),
+                          ),
+                          if (normalizedProgress > 0.15)
+                            Expanded(
+                              child: Opacity(
+                                opacity: textOpacity,
+                                child: const Text(
+                                  'Buscar sedes, mapa, alojamiento, comida o paseos',
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: TextStyle(
+                                    color: Color(0xFF5F7269),
+                                    fontSize: 14,
+                                  ),
+                                ),
                               ),
                             ),
-                          ),
-                        ),
-                      if (normalizedProgress > 0.50)
-                        Opacity(
-                          opacity: textOpacity,
-                          child: const Padding(
-                            padding: EdgeInsets.only(right: 14),
-                            child: Icon(
-                              Icons.arrow_forward_rounded,
-                              size: 18,
-                              color: Color(0xFF5F7269),
+                          if (normalizedProgress > 0.50)
+                            Opacity(
+                              opacity: textOpacity,
+                              child: const Padding(
+                                padding: EdgeInsets.only(right: 14),
+                                child: Icon(
+                                  Icons.arrow_forward_rounded,
+                                  size: 18,
+                                  color: Color(0xFF5F7269),
+                                ),
+                              ),
                             ),
-                          ),
-                        ),
-                    ],
+                        ],
+                      ),
+                    ),
                   ),
                 ),
               ),
@@ -482,56 +568,70 @@ class _HomeTab extends StatelessWidget {
       key: const ValueKey('home'),
       padding: const EdgeInsets.fromLTRB(16, 12, 16, 90),
       children: [
-        Container(
-          padding: const EdgeInsets.all(18),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(8),
-            gradient: const LinearGradient(
-              colors: [Color(0xFFF7FBF6), Color(0xFFE8F3EA)],
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-            ),
-            border: Border.all(color: const Color(0xFFC9D8D0)),
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text(
-                'Tu estadía en Concordia',
-                style: TextStyle(
-                  fontSize: 30,
-                  height: 1.05,
-                  fontWeight: FontWeight.w800,
-                  color: Color(0xFF174D3C),
-                ),
-              ),
-              const SizedBox(height: 10),
-              const Text(
-                'Guía práctica para quienes asisten al III Encuentro sobre '
-                'Historia de Entre Ríos: sedes, alojamiento, comidas y lugares para conocer Concordia.',
-                style: TextStyle(fontSize: 15, color: Color(0xFF203129)),
-              ),
-              const SizedBox(height: 16),
-              Wrap(
-                spacing: 8,
-                runSpacing: 8,
-                children: [
-                  FilledButton.icon(
-                    onPressed: onCopyMessage,
-                    icon: const Icon(Icons.content_copy_rounded),
-                    label: const Text('Copiar consulta de alojamiento'),
-                  ),
-                  OutlinedButton.icon(
-                    onPressed: () => onOpenCategory(1),
-                    icon: const Icon(Icons.bed_rounded),
-                    label: const Text('Ver dónde dormir'),
-                  ),
-                ],
-              ),
-            ],
+        const Text(
+          'Tu estadía en Concordia',
+          style: TextStyle(
+            fontSize: 30,
+            height: 1.05,
+            fontWeight: FontWeight.w800,
+            color: Color(0xFF174D3C),
           ),
         ),
-        const SizedBox(height: 18),
+        const SizedBox(height: 40),
+        LayoutBuilder(
+          builder: (context, constraints) {
+            final tileWidth = constraints.maxWidth * 0.87 / 3;
+            final gap = (constraints.maxWidth - (tileWidth * 3)) / 4;
+
+            Widget tile({
+              required String label,
+              required IconData icon,
+              required VoidCallback onTap,
+              Color? backgroundColor,
+            }) {
+              return SizedBox(
+                width: tileWidth,
+                child: AspectRatio(
+                  aspectRatio: 1.18,
+                  child: _HomeActionTile(
+                    label: label,
+                    icon: icon,
+                    backgroundColor: backgroundColor,
+                    onTap: onTap,
+                  ),
+                ),
+              );
+            }
+
+            return Row(
+              children: [
+                SizedBox(width: gap),
+                tile(
+                  label: 'Lugares',
+                  icon: Icons.place_rounded,
+                  backgroundColor: const Color(0xFFE8F3EA),
+                  onTap: () => onOpenCategory(3),
+                ),
+                SizedBox(width: gap),
+                tile(
+                  label: 'Hospedajes',
+                  icon: Icons.bed_rounded,
+                  backgroundColor: const Color(0xFFE8F3EA),
+                  onTap: () => onOpenCategory(1),
+                ),
+                SizedBox(width: gap),
+                tile(
+                  label: 'Restaurantes',
+                  icon: Icons.restaurant_rounded,
+                  backgroundColor: const Color(0xFFE8F3EA),
+                  onTap: () => onOpenCategory(4),
+                ),
+                SizedBox(width: gap),
+              ],
+            );
+          },
+        ),
+        const SizedBox(height: 60),
         const _EncounterInformationCard(),
         const SizedBox(height: 18),
         _HighlightsGrid(),
@@ -580,10 +680,7 @@ class _HomeTab extends StatelessWidget {
                 const SizedBox(height: 2),
                 const Text(
                   'La información es orientativa. Confirmá tarifas, horarios, disponibilidad, accesibilidad y condiciones directamente con cada establecimiento.',
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: Color(0xFF5F7269),
-                  ),
+                  style: TextStyle(fontSize: 12, color: Color(0xFF5F7269)),
                 ),
               ],
             ),
@@ -601,66 +698,117 @@ class _HomeTab extends StatelessWidget {
   }
 }
 
+class _HomeActionTile extends StatelessWidget {
+  const _HomeActionTile({
+    required this.label,
+    required this.icon,
+    required this.onTap,
+    this.backgroundColor,
+  });
+
+  final String label;
+  final IconData icon;
+  final VoidCallback onTap;
+  final Color? backgroundColor;
+
+  @override
+  Widget build(BuildContext context) {
+    const green = Color(0xFF174D3C);
+    final hasBg = backgroundColor != null;
+    return Material(
+      color: backgroundColor ?? const Color(0xFFF7FBF6),
+      borderRadius: BorderRadius.circular(14),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(14),
+        child: Container(
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(color: const Color(0xFFC9D8D0)),
+          ),
+          padding: const EdgeInsets.all(10),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                icon,
+                size: 24,
+                color: hasBg ? const Color(0xFF174D3C) : const Color(0xFF174D3C),
+              ),
+              SizedBox(height: 6),
+              Text(
+                label,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 12,
+                  height: 1.1,
+                  fontWeight: FontWeight.w800,
+                  color: const Color(0xFF174D3C),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
 
 class _EncounterInformationCard extends StatelessWidget {
   const _EncounterInformationCard();
 
   @override
   Widget build(BuildContext context) {
-    return Card(
-      color: const Color(0xFFEFF6EE),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Row(
           children: [
-            const Row(
-              children: [
-                Icon(Icons.event_rounded, color: Color(0xFF174D3C)),
-                SizedBox(width: 10),
-                Expanded(
-                  child: Text(
-                    'Sedes del Encuentro',
-                    style: TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.w800,
-                      color: Color(0xFF174D3C),
-                    ),
-                  ),
+            Icon(Icons.event_rounded, color: Color(0xFF174D3C)),
+            SizedBox(width: 10),
+            Expanded(
+              child: Text(
+                'Sedes del Encuentro',
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.w800,
+                  color: Color(0xFF174D3C),
                 ),
-              ],
+              ),
             ),
-            const SizedBox(height: 6),
-            const Text(
-              'Las actividades se realizan en dos edificios distintos.',
-              style: TextStyle(color: Color(0xFF5F7269), fontSize: 13),
-            ),
-            const SizedBox(height: 14),
-            _venue(
-              icon: Icons.movie_outlined,
-              assetPath: 'assets/branding/pscs_institucional.webp',
-              title: 'Jueves 13 · 18:30',
-              place: 'Profesorado Superior de Ciencias Sociales',
-              address: 'Hipólito Yrigoyen 1352 · Apertura y cine debate',
-              mapsUrl:
-                  'https://www.google.com/maps/search/?api=1&query=Hip%C3%B3lito+Yrigoyen+1352+Concordia',
-            ),
-            const Divider(height: 24),
-            _venue(
-              icon: Icons.groups_2_outlined,
-              assetPath: 'assets/branding/fcad_uner.png',
-              logoBackgroundColor: Colors.white,
-              title: 'Viernes 14 · desde las 8:00',
-              place: 'Facultad de Ciencias de la Administración · UNER',
-              address: 'Av. Monseñor Tavella 1424 · Mesas y exposiciones',
-              mapsUrl:
-                  'https://www.google.com/maps/search/?api=1&query=Av.+Monse%C3%B1or+Tavella+1424+Concordia',
-            ),
-            const SizedBox(height: 14),
-            const _EncounterActionGroup(),
           ],
         ),
-      ),
+        const SizedBox(height: 6),
+        const Text(
+          'Las actividades se realizan en dos edificios distintos.',
+          style: TextStyle(color: Color(0xFF5F7269), fontSize: 13),
+        ),
+        const SizedBox(height: 14),
+        _venue(
+          icon: Icons.movie_outlined,
+          assetPath: 'assets/branding/pscs_institucional.webp',
+          title: 'Jueves 13 · 18:30',
+          place: 'Profesorado Superior de Ciencias Sociales',
+          address: 'Hipólito Yrigoyen 1352 · Apertura y cine debate',
+          mapsUrl:
+              'https://www.google.com/maps/search/?api=1&query=Hip%C3%B3lito+Yrigoyen+1352+Concordia',
+        ),
+        const Divider(height: 24),
+        _venue(
+          icon: Icons.groups_2_outlined,
+          assetPath: 'assets/branding/fcad_uner.png',
+          logoBackgroundColor: Colors.white,
+          title: 'Viernes 14 · desde las 8:00',
+          place: 'Facultad de Ciencias de la Administración · UNER',
+          address: 'Av. Monseñor Tavella 1424 · Mesas y exposiciones',
+          mapsUrl:
+              'https://www.google.com/maps/search/?api=1&query=Av.+Monse%C3%B1or+Tavella+1424+Concordia',
+        ),
+        const SizedBox(height: 14),
+        const _EncounterActionGroup(),
+      ],
     );
   }
 
@@ -685,8 +833,8 @@ class _EncounterInformationCard extends StatelessWidget {
           padding: assetPath.endsWith('fcad_uner.png')
               ? const EdgeInsets.all(2)
               : assetPath.endsWith('pscs_institucional.webp')
-                  ? const EdgeInsets.all(2)
-                  : const EdgeInsets.all(6),
+              ? const EdgeInsets.all(2)
+              : const EdgeInsets.all(6),
           fit: BoxFit.contain,
         ),
         const SizedBox(width: 11),
@@ -757,10 +905,7 @@ class _EncounterActionGroup extends StatelessWidget {
                 SizedBox(height: 3),
                 Text(
                   'Comunicate con la organización o revisá la publicación institucional.',
-                  style: TextStyle(
-                    color: Color(0xFF5F7269),
-                    fontSize: 12,
-                  ),
+                  style: TextStyle(color: Color(0xFF5F7269), fontSize: 12),
                 ),
               ],
             ),
@@ -774,7 +919,6 @@ class _EncounterActionGroup extends StatelessWidget {
                 title: 'Consultar',
                 subtitle: 'Enviar un correo',
                 icon: Icons.mail_outline_rounded,
-                emphasized: true,
               );
               final official = _EncounterActionCell(
                 action: officialAction,
@@ -785,11 +929,7 @@ class _EncounterActionGroup extends StatelessWidget {
 
               if (!horizontal) {
                 return Column(
-                  children: [
-                    consult,
-                    const Divider(height: 1),
-                    official,
-                  ],
+                  children: [consult, const Divider(height: 1), official],
                 );
               }
 
@@ -817,19 +957,17 @@ class _EncounterActionCell extends StatelessWidget {
     required this.title,
     required this.subtitle,
     required this.icon,
-    this.emphasized = false,
   });
 
   final ContactAction action;
   final String title;
   final String subtitle;
   final IconData icon;
-  final bool emphasized;
 
   @override
   Widget build(BuildContext context) {
     return Material(
-      color: emphasized ? const Color(0xFFE2F0E7) : Colors.white,
+      color: Colors.white,
       child: InkWell(
         onTap: () => _launchExternalUrl(context, action.url),
         child: Padding(
@@ -840,15 +978,13 @@ class _EncounterActionCell extends StatelessWidget {
                 width: 36,
                 height: 36,
                 decoration: BoxDecoration(
-                  color: emphasized
-                      ? const Color(0xFF174D3C)
-                      : const Color(0xFFF0F4F1),
+                  color: const Color(0xFFF0F4F1),
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: Icon(
                   icon,
                   size: 19,
-                  color: emphasized ? Colors.white : const Color(0xFF174D3C),
+                  color: const Color(0xFF174D3C),
                 ),
               ),
               const SizedBox(width: 10),
@@ -858,8 +994,6 @@ class _EncounterActionCell extends StatelessWidget {
                   children: [
                     Text(
                       title,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
                       style: const TextStyle(
                         color: Color(0xFF174D3C),
                         fontWeight: FontWeight.w800,
@@ -868,8 +1002,6 @@ class _EncounterActionCell extends StatelessWidget {
                     const SizedBox(height: 1),
                     Text(
                       subtitle,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
                       style: const TextStyle(
                         color: Color(0xFF5F7269),
                         fontSize: 11,
@@ -1035,7 +1167,7 @@ class _HighlightsGrid extends StatelessWidget {
     return Card(
       clipBehavior: Clip.antiAlias,
       child: Padding(
-        padding: const EdgeInsets.all(12),
+        padding: const EdgeInsets.all(10),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -1044,12 +1176,9 @@ class _HighlightsGrid extends StatelessWidget {
               item.title,
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
-              style: const TextStyle(
-                fontSize: 12,
-                color: Color(0xFF5F7269),
-              ),
+              style: const TextStyle(fontSize: 12, color: Color(0xFF5F7269)),
             ),
-            const SizedBox(height: 14),
+            const SizedBox(height: 10),
             Icon(icon, size: 32, color: const Color(0xFF174D3C)),
             const SizedBox(height: 4),
             Text(
@@ -1079,7 +1208,7 @@ class _QuickAccessGrid extends StatelessWidget {
     final quickCards = [
       (
         'Dormir',
-        'Alternativas para viajar solo, en pareja o con colegas.',
+        'Alternativas para viajar solo, en pareja o en grupo.',
         Icons.bed_rounded,
         1,
       ),
@@ -1100,8 +1229,8 @@ class _QuickAccessGrid extends StatelessWidget {
         favoritesCount == 0
             ? 'Todavía no guardaste ninguna opción.'
             : favoritesCount == 1
-                ? '1 opción guardada.'
-                : '$favoritesCount opciones guardadas.',
+            ? '1 opción guardada.'
+            : '$favoritesCount opciones guardadas.',
         Icons.bookmark_rounded,
         0,
       ),
@@ -1118,32 +1247,34 @@ class _QuickAccessGrid extends StatelessWidget {
               .map((card) {
                 return SizedBox(
                   width: cardWidth,
+                  height: 150,
                   child: InkWell(
                     borderRadius: BorderRadius.circular(8),
                     onTap: () => onOpenCategory(card.$4),
                     child: Card(
                       child: Padding(
-                        padding: const EdgeInsets.all(14),
+                        padding: const EdgeInsets.all(12),
                         child: Column(
-          mainAxisSize: MainAxisSize.max,
-                          crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisAlignment: MainAxisAlignment.center,
                           children: [
                             Icon(card.$3, color: const Color(0xFF174D3C)),
-                            const SizedBox(height: 16),
+                            const SizedBox(height: 10),
                             Text(
                               card.$1,
                               maxLines: 2,
                               overflow: TextOverflow.ellipsis,
+                              textAlign: TextAlign.center,
                               style: const TextStyle(
                                 fontWeight: FontWeight.w700,
                                 fontSize: 17,
                               ),
                             ),
-                            const SizedBox(height: 6),
+                            const SizedBox(height: 4),
                             Text(
                               card.$2,
                               maxLines: 3,
                               overflow: TextOverflow.ellipsis,
+                              textAlign: TextAlign.center,
                               style: const TextStyle(
                                 color: Color(0xFF5F7269),
                                 fontSize: 12,
@@ -1155,11 +1286,11 @@ class _QuickAccessGrid extends StatelessWidget {
                     ),
                   ),
                 );
-              })
-              .toList(growable: false),
-        );
-      },
-    );
+                })
+                .toList(growable: false),
+          );
+        },
+      );
   }
 }
 
@@ -1519,17 +1650,16 @@ class _ActionButton extends StatelessWidget {
       _ => Icons.open_in_new_rounded,
     };
 
-    return isPrimary
-        ? FilledButton.icon(
-            onPressed: () => _launchExternalUrl(context, action.url),
-            icon: Icon(iconData),
-            label: Text(action.label),
-          )
-        : OutlinedButton.icon(
-            onPressed: () => _launchExternalUrl(context, action.url),
-            icon: Icon(iconData),
-            label: Text(action.label),
-          );
+    final style = FilledButton.styleFrom(
+      backgroundColor: const Color(0xFFE8F3EA),
+      foregroundColor: const Color(0xFF174D3C),
+    );
+    return FilledButton.icon(
+      style: style,
+      onPressed: () => _launchExternalUrl(context, action.url),
+      icon: Icon(iconData),
+      label: Text(action.label),
+    );
   }
 }
 
@@ -1654,7 +1784,9 @@ class _NavItem extends StatelessWidget {
           Icon(
             icon,
             size: 22,
-            color: isSelected ? const Color(0xFF174D3C) : const Color(0xFF5F7269),
+            color: isSelected
+                ? const Color(0xFF174D3C)
+                : const Color(0xFF5F7269),
           ),
           const SizedBox(height: 1),
           Text(
@@ -1662,7 +1794,9 @@ class _NavItem extends StatelessWidget {
             style: TextStyle(
               fontSize: 10,
               fontWeight: FontWeight.w600,
-              color: isSelected ? const Color(0xFF174D3C) : const Color(0xFF5F7269),
+              color: isSelected
+                  ? const Color(0xFF174D3C)
+                  : const Color(0xFF5F7269),
             ),
           ),
           const Spacer(),
@@ -1689,45 +1823,47 @@ class _CenterNavItem extends StatelessWidget {
   Widget build(BuildContext context) {
     return InkWell(
       onTap: onTap,
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          const Spacer(),
-          Transform.translate(
-            offset: const Offset(0, -14),
-            child: Container(
-              width: 34,
-              height: 34,
-              decoration: BoxDecoration(
-                color: isSelected
-                    ? const Color(0xFF174D3C)
-                    : const Color(0xFFE8F3EA),
-                shape: BoxShape.circle,
-                boxShadow: [
-                  BoxShadow(
-                    color: const Color(0xFF174D3C).withValues(alpha: isSelected ? 0.35 : 0.15),
-                    blurRadius: 8,
-                    offset: const Offset(0, 3),
-                  ),
-                ],
-              ),
-              child: Icon(
-                icon,
-                size: 16,
-                color: isSelected ? Colors.white : const Color(0xFF174D3C),
+      child: SizedBox(
+        height: 60,
+        child: Stack(
+          clipBehavior: Clip.none,
+          alignment: Alignment.center,
+          children: [
+            Positioned(
+              top: -27,
+              child: Container(
+                width: 54,
+                height: 54,
+                decoration: BoxDecoration(
+                  color: const Color(0xFF174D3C),
+                  shape: BoxShape.circle,
+                  border: Border.all(color: Colors.white, width: 3),
+                  boxShadow: [
+                    BoxShadow(
+                      color: const Color(0xFF174D3C).withValues(alpha: 0.28),
+                      blurRadius: 14,
+                      offset: const Offset(0, 5),
+                    ),
+                  ],
+                ),
+                child: Icon(icon, size: 24, color: Colors.white),
               ),
             ),
-          ),
-          Text(
-            label,
-            style: TextStyle(
-              fontSize: 10,
-              fontWeight: FontWeight.w600,
-              color: isSelected ? const Color(0xFF174D3C) : const Color(0xFF5F7269),
+            Positioned(
+              bottom: 3,
+              child: Text(
+                label,
+                style: TextStyle(
+                  fontSize: 10,
+                  fontWeight: FontWeight.w600,
+                  color: isSelected
+                      ? const Color(0xFF174D3C)
+                      : const Color(0xFF5F7269),
+                ),
+              ),
             ),
-          ),
-          const Spacer(),
-        ],
+          ],
+        ),
       ),
     );
   }

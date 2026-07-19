@@ -4,22 +4,22 @@ final homeHighlights = List<HomeHighlight>.unmodifiable([
   HomeHighlight(
     title: 'Dónde dormir',
     value: _countOpportunities(OpportunityCategory.lodging),
-    caption: 'Opciones para distintos presupuestos y tipos de viaje',
+    caption: 'Opciones para distintos presupuestos.',
   ),
   HomeHighlight(
     title: 'Comida práctica',
     value: _countOpportunities(OpportunityCategory.viandas),
-    caption: 'Opciones para comer durante las jornadas del Encuentro',
+    caption: 'Comidas para el encuentro.',
   ),
   HomeHighlight(
     title: 'Gastronomía',
     value: _countOpportunities(OpportunityCategory.gastronomy),
-    caption: 'Restaurantes, bares y pizzerías para hacer una salida',
+    caption: 'Restaurantes, bares y pizzerías.',
   ),
   HomeHighlight(
     title: 'Paseos',
     value: _countOpportunities(OpportunityCategory.places),
-    caption: 'Paseos y sitios de interés para el tiempo libre',
+    caption: 'Sitios de interés para tu tiempo libre.',
   ),
 ]);
 
@@ -113,7 +113,7 @@ const opportunities = <OpportunityItem>[
     title: 'Casa di Aqua Apart Hotel',
     subtitle: 'Departamentos para grupos de 3 a 6 personas',
     description:
-        'Apart hotel ubicado en Av. Eva Perón 2452. Es una alternativa para quienes viajan con colegas y prefieren compartir un departamento con mayor independencia.',
+        'Apart hotel ubicado en Av. Eva Perón 2452. Es una alternativa para quienes viajan en grupo y prefieren compartir un departamento con mayor independencia.',
     category: OpportunityCategory.lodging,
     tags: [OpportunityTag.group, OpportunityTag.direct, OpportunityTag.budget],
     highlights: [
@@ -122,11 +122,7 @@ const opportunities = <OpportunityItem>[
       'Las tarifas se consultan en el sitio web',
     ],
     actions: [
-      ContactAction(
-        label: 'Llamar',
-        url: 'tel:03454273422',
-        icon: 'web',
-      ),
+      ContactAction(label: 'Llamar', url: 'tel:03454273422', icon: 'web'),
       ContactAction(
         label: 'WhatsApp',
         url: 'https://wa.me/5493454015361',
